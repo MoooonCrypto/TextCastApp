@@ -10,6 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import MiniPlayer from '../components/MiniPlayer';
+import FullScreenPlayer from './FullScreenPlayer';
 
 // 型定義
 interface Category {
@@ -49,12 +50,15 @@ const MainScreen: React.FC = () => {
   // ミニプレーヤーの状態管理
   const [isPlayerVisible, setIsPlayerVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isFullScreenVisible, setIsFullScreenVisible] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const [currentTrack, setCurrentTrack] = useState<{
     id: string;
     title: string;
     category: string;
     currentTime: string;
     totalTime: string;
+    content?: string;
   } | null>(null);
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -91,6 +95,7 @@ const MainScreen: React.FC = () => {
         category: categories.find(cat => cat.id === selectedCategoryId)?.name || '',
         currentTime: '0:00',
         totalTime: item.duration,
+        content: 'ここに音声コンテンツのテキストが表示されます。現在はサンプルテキストです。',
       });
       setIsPlaying(true);
       setIsPlayerVisible(true);
@@ -124,8 +129,12 @@ const MainScreen: React.FC = () => {
   };
 
   const handleMiniPlayerPress = () => {
-    // フルスクリーンプレーヤーを開く（後で実装）
-    console.log('フルスクリーンプレーヤーを開く');
+    // フルスクリーンプレーヤーを開く
+    setIsFullScreenVisible(true);
+  };
+
+  const handleSpeedChange = (speed: number) => {
+    setPlaybackSpeed(speed);
   };
 
   // 素材追加ハンドラ（後で実装）
@@ -236,6 +245,19 @@ const MainScreen: React.FC = () => {
         onNext={handleNext}
         onPrevious={handlePrevious}
         onPress={handleMiniPlayerPress}
+      />
+
+      {/* フルスクリーンプレーヤー */}
+      <FullScreenPlayer
+        visible={isFullScreenVisible}
+        onClose={() => setIsFullScreenVisible(false)}
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        onPlayPause={handlePlayPause}
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        playbackSpeed={playbackSpeed}
+        onSpeedChange={handleSpeedChange}
       />
     </SafeAreaView>
   );

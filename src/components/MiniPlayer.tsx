@@ -37,9 +37,10 @@ const MiniPlayer: React.FC<MiniPlayerProps> = ({
   const translateY = React.useRef(new Animated.Value(100)).current;
 
   React.useEffect(() => {
-    Animated.timing(translateY, {
+    Animated.spring(translateY, {
       toValue: isVisible ? 0 : 100,
-      duration: 300,
+      tension: 65,
+      friction: 11,
       useNativeDriver: true,
     }).start();
   }, [isVisible]);
