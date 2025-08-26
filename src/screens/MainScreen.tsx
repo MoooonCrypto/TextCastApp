@@ -1,3 +1,4 @@
+// src/screens/MainScreen.tsx
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -9,8 +10,7 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import MiniPlayer from '../components/MiniPlayer';
-import FullScreenPlayer from './FullScreenPlayer';
+import UnifiedPlayer from '../components/UnifiedPlayer';
 
 // 型定義
 interface Category {
@@ -47,10 +47,9 @@ const MainScreen: React.FC = () => {
     { id: '3', title: 'サンプル音声3', duration: '3:12', source: 'スクロール', isPlaying: false },
   ]);
 
-  // ミニプレーヤーの状態管理
+  // プレーヤーの状態管理
   const [isPlayerVisible, setIsPlayerVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isFullScreenVisible, setIsFullScreenVisible] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const [currentTrack, setCurrentTrack] = useState<{
     id: string;
@@ -79,7 +78,7 @@ const MainScreen: React.FC = () => {
     console.log('カテゴリ追加');
   };
 
-  // 音声再生ハンドラ（後で実装）
+  // 音声再生ハンドラ
   const handlePlayAudio = (itemId: string) => {
     const item = audioItems.find(audio => audio.id === itemId);
     if (!item) return;
@@ -93,7 +92,7 @@ const MainScreen: React.FC = () => {
         id: item.id,
         title: item.title,
         category: categories.find(cat => cat.id === selectedCategoryId)?.name || '',
-        currentTime: '0:00',
+        currentTime: '0:00',  // 0から開始
         totalTime: item.duration,
         content: 'ここに音声コンテンツのテキストが表示されます。現在はサンプルテキストです。',
       });
@@ -109,7 +108,7 @@ const MainScreen: React.FC = () => {
     );
   };
 
-  // ミニプレーヤーのハンドラ
+  // プレーヤーのハンドラ
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
@@ -126,11 +125,6 @@ const MainScreen: React.FC = () => {
     const currentIndex = audioItems.findIndex(item => item.id === currentTrack?.id);
     const prevIndex = currentIndex === 0 ? audioItems.length - 1 : currentIndex - 1;
     handlePlayAudio(audioItems[prevIndex].id);
-  };
-
-  const handleMiniPlayerPress = () => {
-    // フルスクリーンプレーヤーを開く
-    setIsFullScreenVisible(true);
   };
 
   const handleSpeedChange = (speed: number) => {
@@ -236,21 +230,9 @@ const MainScreen: React.FC = () => {
         <Text style={styles.adText}>広告表示</Text>
       </View>
 
-      {/* ミニプレーヤー */}
-      <MiniPlayer
+      {/* 統合プレーヤー */}
+      <UnifiedPlayer
         isVisible={isPlayerVisible}
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        onPlayPause={handlePlayPause}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onPress={handleMiniPlayerPress}
-      />
-
-      {/* フルスクリーンプレーヤー */}
-      <FullScreenPlayer
-        visible={isFullScreenVisible}
-        onClose={() => setIsFullScreenVisible(false)}
         currentTrack={currentTrack}
         isPlaying={isPlaying}
         onPlayPause={handlePlayPause}
@@ -258,6 +240,7 @@ const MainScreen: React.FC = () => {
         onPrevious={handlePrevious}
         playbackSpeed={playbackSpeed}
         onSpeedChange={handleSpeedChange}
+        bottomTabHeight={80}
       />
     </SafeAreaView>
   );
