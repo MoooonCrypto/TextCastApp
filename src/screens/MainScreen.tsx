@@ -1,401 +1,524 @@
-// src/screens/MainScreen.tsx
-import React, { useState, useRef } from 'react';
+// src/screens/MainScreen.tsx (更新版)
+
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  ScrollView,
-  TouchableOpacity,
-  FlatList,
   StyleSheet,
-  Dimensions,
+  FlatList,
+  TouchableOpacity,
   SafeAreaView,
+  StatusBar,
+  Alert,
 } from 'react-native';
-import UnifiedPlayer from '../components/UnifiedPlayer';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { TextItem } from '../types';
 
-// 型定義
-interface Category {
-  id: string;
-  name: string;
-  isActive: boolean;
-}
+// テンポラリデータ（後で状態管理に置き換え）
+const mockTextItems: TextItem[] = [
+  {
+    id: '1',
+    title: 'AI技術の現状と未来',
+    content: 'AI技術は急速に発展しており、様々な分野で活用が期待されています...',
+    source: 'url',
+    sourceUrl: 'https://example.com/ai-article',
+    category: '学習',
+    tags: ['AI', 'テクノロジー'],
+    importance: 3,
+    createdAt: new Date('2024-08-20'),
+    updatedAt: new Date('2024-08-20'),
+    duration: 300, // 5分
+    lastPosition: 0,
+    playCount: 2,
+    isCompleted: false,
+    bookmarks: [],
+    notes: [],
+    isFavorite: false,
+  },
+  {
+    id: '2',
+    title: 'React Nativeベストプラクティス',
+    content: 'React Nativeでアプリ開発をする際のベストプラクティスについて...',
+    source: 'file',
+    fileName: 'react-native-guide.pdf',
+    category: 'ビジネス',
+    tags: ['React Native', 'モバイル開発'],
+    importance: 2,
+    createdAt: new Date('2024-08-19'),
+    updatedAt: new Date('2024-08-19'),
+    duration: 480, // 8分
+    lastPosition: 120,
+    playCount: 1,
+    isCompleted: false,
+    bookmarks: [],
+    notes: [],
+    isFavorite: true,
+  },
+];
 
-interface AudioItem {
-  id: string;
-  title: string;
-  duration: string;
-  source: string;
-  isPlaying: boolean;
-}
+interface MainScreenProps {}
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const MainScreen: React.FC<MainScreenProps> = () => {
+  const [textItems, setTextItems] = useState<TextItem[]>(mockTextItems);
+  const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
 
-const MainScreen: React.FC = () => {
-  // カテゴリの初期データ
-  const [categories, setCategories] = useState<Category[]>([
-    { id: '1', name: 'フリー書籍', isActive: true },
-    { id: '2', name: '資格勉強', isActive: false },
-    { id: '3', name: '論文', isActive: false },
-    { id: '4', name: '英単語暗記用', isActive: false },
-  ]);
-
-  const [selectedCategoryId, setSelectedCategoryId] = useState('1');
-  
-  // 音声データのサンプル
-  const [audioItems, setAudioItems] = useState<AudioItem[]>([
-    { id: '1', title: 'サンプル音声1', duration: '5:23', source: 'スクロール', isPlaying: false },
-    { id: '2', title: 'サンプル音声2', duration: '10:45', source: '素材データ追加+', isPlaying: false },
-    { id: '3', title: 'サンプル音声3', duration: '3:12', source: 'スクロール', isPlaying: false },
-  ]);
-
-  // プレーヤーの状態管理
-  const [isPlayerVisible, setIsPlayerVisible] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
-  const [currentTrack, setCurrentTrack] = useState<{
-    id: string;
-    title: string;
-    category: string;
-    currentTime: string;
-    totalTime: string;
-    content?: string;
-  } | null>(null);
-
-  const scrollViewRef = useRef<ScrollView>(null);
-
-  // カテゴリ選択ハンドラ
-  const handleCategoryPress = (categoryId: string) => {
-    setSelectedCategoryId(categoryId);
-    setCategories(prev =>
-      prev.map(cat => ({
-        ...cat,
-        isActive: cat.id === categoryId
-      }))
-    );
-  };
-
-  // カテゴリ追加ハンドラ（後で実装）
-  const handleAddCategory = () => {
-    console.log('カテゴリ追加');
-  };
-
-  // 音声再生ハンドラ
-  const handlePlayAudio = (itemId: string) => {
-    const item = audioItems.find(audio => audio.id === itemId);
-    if (!item) return;
-
-    if (currentTrack?.id === itemId && isPlaying) {
-      // 同じトラックが再生中の場合は一時停止
-      setIsPlaying(false);
-    } else {
-      // 新しいトラックを再生または再開
-      setCurrentTrack({
-        id: item.id,
-        title: item.title,
-        category: categories.find(cat => cat.id === selectedCategoryId)?.name || '',
-        currentTime: '0:00',  // 0から開始
-        totalTime: item.duration,
-        content: 'ここに音声コンテンツのテキストが表示されます。現在はサンプルテキストです。',
-      });
-      setIsPlaying(true);
-      setIsPlayerVisible(true);
+  // テーマ色（ダークテーマベース）
+  const theme = {
+    colors: {
+      background: '#121212',
+      surface: '#1E1E1E',
+      primary: '#BB86FC',
+      secondary: '#03DAC6',
+      text: '#FFFFFF',
+      textSecondary: '#B3B3B3',
+      textTertiary: '#666666',
+      border: '#333333',
+      success: '#4CAF50',
+      warning: '#FF9800',
+      error: '#F44336',
     }
-
-    setAudioItems(prev =>
-      prev.map(audioItem => ({
-        ...audioItem,
-        isPlaying: audioItem.id === itemId ? !audioItem.isPlaying : false
-      }))
-    );
   };
 
-  // プレーヤーのハンドラ
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
+  // 再生処理
+  const handlePlay = (itemId: string) => {
+    if (currentPlayingId === itemId) {
+      // 一時停止
+      setCurrentPlayingId(null);
+    } else {
+      // 再生開始
+      setCurrentPlayingId(itemId);
+      // TODO: 実際の音声再生処理を実装
+    }
   };
 
-  const handleNext = () => {
-    // 次のトラックを再生
-    const currentIndex = audioItems.findIndex(item => item.id === currentTrack?.id);
-    const nextIndex = (currentIndex + 1) % audioItems.length;
-    handlePlayAudio(audioItems[nextIndex].id);
+  // アイテム詳細表示
+  const handleItemPress = (item: TextItem) => {
+    // TODO: 詳細画面への遷移を実装
+    Alert.alert('詳細表示', `"${item.title}" の詳細画面は今後実装予定です。`);
   };
 
-  const handlePrevious = () => {
-    // 前のトラックを再生
-    const currentIndex = audioItems.findIndex(item => item.id === currentTrack?.id);
-    const prevIndex = currentIndex === 0 ? audioItems.length - 1 : currentIndex - 1;
-    handlePlayAudio(audioItems[prevIndex].id);
+  // 設定画面へ遷移
+  const handleSettings = () => {
+    Alert.alert('設定', '設定画面は今後実装予定です。');
   };
 
-  const handleSpeedChange = (speed: number) => {
-    setPlaybackSpeed(speed);
-  };
-
-  // 素材追加ハンドラ（後で実装）
+  // 新規素材追加画面へ遷移
   const handleAddMaterial = () => {
-    console.log('素材データ追加');
+    router.push('/add-material' as any);
   };
+
+  // 時間フォーマット関数
+  const formatDuration = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  // 重要度に応じた色を取得
+  const getImportanceColor = (importance: 1 | 2 | 3): string => {
+    switch (importance) {
+      case 1: return theme.colors.textTertiary;
+      case 2: return theme.colors.warning;
+      case 3: return theme.colors.error;
+      default: return theme.colors.textTertiary;
+    }
+  };
+
+  // TextItemCard コンポーネント
+  const TextItemCard: React.FC<{
+    item: TextItem;
+    onPlay: (id: string) => void;
+    onPress: (item: TextItem) => void;
+    isPlaying: boolean;
+  }> = ({ item, onPlay, onPress, isPlaying }) => (
+    <TouchableOpacity 
+      style={styles.itemCard}
+      onPress={() => onPress(item)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.itemHeader}>
+        <View style={styles.itemTitleRow}>
+          <Text style={styles.itemTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
+          {item.isFavorite && (
+            <Ionicons 
+              name="heart" 
+              size={16} 
+              color={theme.colors.error} 
+              style={styles.favoriteIcon}
+            />
+          )}
+        </View>
+        
+        <View style={styles.itemMeta}>
+          <View style={styles.metaLeft}>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{item.category}</Text>
+            </View>
+            
+            <View style={[
+              styles.importanceDot, 
+              { backgroundColor: getImportanceColor(item.importance) }
+            ]} />
+            
+            <Text style={styles.metaText}>
+              {formatDuration(item.duration || 0)}
+            </Text>
+            
+            <Text style={styles.metaText}>
+              再生{item.playCount}回
+            </Text>
+          </View>
+          
+          <TouchableOpacity
+            style={styles.playButton}
+            onPress={() => onPlay(item.id)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons
+              name={isPlaying ? "pause" : "play"}
+              size={24}
+              color={theme.colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+      
+      <Text style={styles.itemContent} numberOfLines={2}>
+        {item.content}
+      </Text>
+      
+      {/* プログレスバー */}
+      {item.lastPosition && item.duration && (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View 
+              style={[
+                styles.progressFill,
+                { width: `${(item.lastPosition / item.duration) * 100}%` }
+              ]}
+            />
+          </View>
+          <Text style={styles.progressText}>
+            {formatDuration(item.lastPosition)} / {formatDuration(item.duration)}
+          </Text>
+        </View>
+      )}
+      
+      {/* タグ表示 */}
+      {item.tags.length > 0 && (
+        <View style={styles.tagsContainer}>
+          {item.tags.slice(0, 3).map((tag, index) => (
+            <View key={index} style={styles.tag}>
+              <Text style={styles.tagText}>{tag}</Text>
+            </View>
+          ))}
+          {item.tags.length > 3 && (
+            <Text style={styles.moreTagsText}>+{item.tags.length - 3}</Text>
+          )}
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+
+  // リストアイテムの描画
+  const renderItem = ({ item }: { item: TextItem }) => (
+    <TextItemCard
+      item={item}
+      onPlay={handlePlay}
+      onPress={handleItemPress}
+      isPlaying={currentPlayingId === item.id}
+    />
+  );
+
+  // 空の状態
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Ionicons
+        name="document-text-outline"
+        size={64}
+        color={theme.colors.textTertiary}
+      />
+      <Text style={styles.emptyTitle}>
+        まだテキストがありません
+      </Text>
+      <Text style={styles.emptySubtitle}>
+        右下の + ボタンから新しいテキストを追加してみましょう
+      </Text>
+    </View>
+  );
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    safeArea: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    headerButton: {
+      width: 40,
+      height: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 20,
+      backgroundColor: theme.colors.surface,
+    },
+    content: {
+      flex: 1,
+    },
+    stats: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: theme.colors.surface,
+    },
+    statsText: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+    },
+    listContainer: {
+      padding: 16,
+    },
+    itemCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    itemHeader: {
+      marginBottom: 8,
+    },
+    itemTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 8,
+    },
+    itemTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.text,
+      flex: 1,
+      marginRight: 8,
+    },
+    favoriteIcon: {
+      marginTop: 2,
+    },
+    itemMeta: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    metaLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    categoryBadge: {
+      backgroundColor: theme.colors.secondary + '20',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 8,
+      marginRight: 8,
+    },
+    categoryText: {
+      fontSize: 12,
+      color: theme.colors.secondary,
+      fontWeight: '500',
+    },
+    importanceDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      marginRight: 8,
+    },
+    metaText: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginRight: 12,
+    },
+    playButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.colors.primary + '20',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    itemContent: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      lineHeight: 20,
+      marginBottom: 8,
+    },
+    progressContainer: {
+      marginBottom: 8,
+    },
+    progressBar: {
+      height: 3,
+      backgroundColor: theme.colors.border,
+      borderRadius: 1.5,
+      marginBottom: 4,
+    },
+    progressFill: {
+      height: '100%',
+      backgroundColor: theme.colors.primary,
+      borderRadius: 1.5,
+    },
+    progressText: {
+      fontSize: 11,
+      color: theme.colors.textTertiary,
+    },
+    tagsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+    },
+    tag: {
+      backgroundColor: theme.colors.border,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    tagText: {
+      fontSize: 10,
+      color: theme.colors.textSecondary,
+    },
+    moreTagsText: {
+      fontSize: 10,
+      color: theme.colors.textTertiary,
+      fontStyle: 'italic',
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 32,
+    },
+    emptyTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    emptySubtitle: {
+      fontSize: 14,
+      color: theme.colors.textTertiary,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    fab: {
+      position: 'absolute',
+      right: 20,
+      bottom: 20,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: theme.colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+    },
+  });
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* ヘッダー */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>サイドメニュー表示バー</Text>
-        <TouchableOpacity style={styles.searchButton}>
-          <Text>検索</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
+        
+        {/* ヘッダー */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>TextCast</Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleSettings}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name="search-outline"
+                size={20}
+                color={theme.colors.text}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleSettings}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name="settings-outline"
+                size={20}
+                color={theme.colors.text}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      {/* カテゴリスクロール */}
-      <View style={styles.categoryContainer}>
-        <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryScrollContent}
+        {/* 統計情報 */}
+        <View style={styles.stats}>
+          <Text style={styles.statsText}>
+            {textItems.length}件のテキスト
+          </Text>
+          <Text style={styles.statsText}>
+            未読: {textItems.filter(item => !item.isCompleted).length}件
+          </Text>
+        </View>
+
+        {/* コンテンツエリア */}
+        <View style={styles.content}>
+          <FlatList
+            data={textItems}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.listContainer,
+              textItems.length === 0 && { flex: 1 }
+            ]}
+            ListEmptyComponent={renderEmptyState}
+          />
+        </View>
+
+        {/* フローティングアクションボタン */}
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={handleAddMaterial}
+          activeOpacity={0.8}
         >
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.categoryItem,
-                category.isActive && styles.categoryItemActive
-              ]}
-              onPress={() => handleCategoryPress(category.id)}
-            >
-              <Text style={[
-                styles.categoryText,
-                category.isActive && styles.categoryTextActive
-              ]}>
-                {category.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={styles.addCategoryButton}
-            onPress={handleAddCategory}
-          >
-            <Text style={styles.addCategoryText}>+</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
-      {/* 基本設定セクション */}
-      <View style={styles.settingsSection}>
-        <View style={styles.settingRow}>
-          <Text style={styles.settingLabel}>技術記事 #1</Text>
-          <Text style={styles.settingValue}>フリー書籍</Text>
-        </View>
-        <View style={styles.settingRow}>
-          <Text style={styles.settingLabel}>←スクロール→</Text>
-          <Text style={styles.settingValue}>資格勉強</Text>
-        </View>
-      </View>
-
-      {/* 音声データリスト */}
-      <View style={styles.audioListContainer}>
-        <Text style={styles.audioListTitle}>音声データ一覧#2</Text>
-        <FlatList
-          data={audioItems}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.audioItem}
-              onPress={() => handlePlayAudio(item.id)}
-            >
-              <View style={styles.audioInfo}>
-                <Text style={styles.audioTitle}>{item.title}</Text>
-                <Text style={styles.audioDuration}>{item.duration}</Text>
-              </View>
-              <View style={styles.audioControls}>
-                <TouchableOpacity style={styles.playButton}>
-                  <Text>{item.isPlaying ? '⏸' : '▶'}</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          )}
-          ListFooterComponent={
-            <TouchableOpacity
-              style={styles.addMaterialButton}
-              onPress={handleAddMaterial}
-            >
-              <Text style={styles.addMaterialText}>素材データ追加+</Text>
-            </TouchableOpacity>
-          }
-        />
-      </View>
-
-      {/* 広告表示エリア */}
-      <View style={[styles.adContainer, isPlayerVisible && styles.adContainerWithPlayer]}>
-        <Text style={styles.adText}>広告表示</Text>
-      </View>
-
-      {/* 統合プレーヤー */}
-      <UnifiedPlayer
-        isVisible={isPlayerVisible}
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        onPlayPause={handlePlayPause}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        playbackSpeed={playbackSpeed}
-        onSpeedChange={handleSpeedChange}
-        bottomTabHeight={80}
-      />
-    </SafeAreaView>
+          <Ionicons name="add" size={28} color={theme.colors.background} />
+        </TouchableOpacity>
+      </SafeAreaView>
+    </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  searchButton: {
-    padding: 8,
-  },
-  categoryContainer: {
-    height: 50,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  categoryScrollContent: {
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  categoryItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 12,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-  },
-  categoryItemActive: {
-    backgroundColor: '#007AFF',
-  },
-  categoryText: {
-    fontSize: 14,
-    color: '#333333',
-  },
-  categoryTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  addCategoryButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  addCategoryText: {
-    fontSize: 20,
-    color: '#666666',
-  },
-  settingsSection: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#F9F9F9',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  settingLabel: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  settingValue: {
-    fontSize: 14,
-    color: '#333333',
-  },
-  audioListContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  audioListTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  audioItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  audioInfo: {
-    flex: 1,
-  },
-  audioTitle: {
-    fontSize: 15,
-    color: '#333333',
-    marginBottom: 4,
-  },
-  audioDuration: {
-    fontSize: 13,
-    color: '#999999',
-  },
-  audioControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  playButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addMaterialButton: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    marginTop: 8,
-  },
-  addMaterialText: {
-    fontSize: 15,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  adContainer: {
-    height: 60,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-  },
-  adContainerWithPlayer: {
-    marginBottom: 80, // ミニプレーヤーの高さ分のマージン
-  },
-  adText: {
-    fontSize: 14,
-    color: '#999999',
-  },
-});
 
 export default MainScreen;

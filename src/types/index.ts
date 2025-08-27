@@ -19,6 +19,23 @@ export interface TextItem {
   isCompleted: boolean;    // 読了フラグ
   bookmarks: Bookmark[];   // ブックマーク
   notes: Note[];           // メモ
+  isFavorite: boolean;     // お気に入りフラグ（追加）
+}
+
+export interface Playlist {
+  id: string;                    // UUID
+  title: string;                 // プレイリスト名
+  description?: string;          // 説明
+  coverImage?: string;           // カバー画像
+  itemIds: string[];             // 含まれるTextItemのID配列
+  isDefault: boolean;            // デフォルトプレイリスト
+  createdAt: Date;
+  updatedAt: Date;
+  totalDuration: number;         // 総再生時間
+  playCount: number;             // 再生回数
+  lastPlayedItemId?: string;     // 最後に再生したアイテム
+  shuffleMode: boolean;          // シャッフル
+  repeatMode: 'none' | 'one' | 'all'; // リピート
 }
 
 export interface Bookmark {
@@ -38,16 +55,20 @@ export interface Note {
 
 export interface UserSettings {
   isPremium: boolean;           // プレミアム会員フラグ
+  referralCode: string;         // 自分の紹介コード
+  referredBy?: string;          // 紹介者コード
+  referralCount: number;        // 紹介成功数
+  maxPlaylists: number;         // プレイリスト上限（20 + 紹介数）
   ttsSpeed: number;            // 再生速度（0.5-3.0）
   ttsVoice: string;           // 音声選択
-  autoHighlight: boolean;      // 読み上げハイライト
-  autoScroll: boolean;         // 自動スクロール
-  skipUrls: boolean;          // URL読み飛ばし
-  skipBrackets: boolean;       // 括弧内読み飛ばし
+  autoBackup: boolean;         // 自動バックアップ
+  backupProvider: 'icloud' | 'gdrive' | 'both'; // バックアップ先
+  lastBackupDate?: Date;       // 最終バックアップ日時
+  theme: 'light' | 'dark' | 'auto'; // テーマ設定
+  globalPlayerVisible: boolean; // グローバルプレイヤー表示
   maxFreeItems: number;        // 無料版上限数（50件）
   maxFreeFiles: number;        // 無料版ファイル上限（月5件）
   maxFreeUrls: number;         // 無料版URL上限（月10件）
-  theme: 'light' | 'dark' | 'auto'; // テーマ設定
   fontSize: 'small' | 'medium' | 'large'; // フォントサイズ
 }
 
