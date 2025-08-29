@@ -105,7 +105,6 @@ const AddMaterialScreen: React.FC<AddMaterialScreenProps> = ({
     try {
       setIsLoading(true);
 
-      // TextItem オブジェクトを作成
       const newMaterial: Partial<TextItem> = {
         id: Date.now().toString(),
         title: title.trim(),
@@ -428,7 +427,7 @@ const AddMaterialScreen: React.FC<AddMaterialScreenProps> = ({
           style={styles.headerButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="close" size={24} color={theme.colors.text} />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         
         <Text style={styles.headerTitle}>新しい素材を追加</Text>

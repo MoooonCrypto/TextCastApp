@@ -1,6 +1,6 @@
-// src/screens/MainScreen.tsx (更新版)
+// app/index.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,13 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { TextItem } from '../types';
+import { TextItem } from '../src/types';
 
-// テンポラリデータ（後で状態管理に置き換え）
+// テンポラリデータ
 const mockTextItems: TextItem[] = [
   {
     id: '1',
@@ -28,7 +29,7 @@ const mockTextItems: TextItem[] = [
     importance: 3,
     createdAt: new Date('2024-08-20'),
     updatedAt: new Date('2024-08-20'),
-    duration: 300, // 5分
+    duration: 300,
     lastPosition: 0,
     playCount: 2,
     isCompleted: false,
@@ -47,7 +48,7 @@ const mockTextItems: TextItem[] = [
     importance: 2,
     createdAt: new Date('2024-08-19'),
     updatedAt: new Date('2024-08-19'),
-    duration: 480, // 8分
+    duration: 480,
     lastPosition: 120,
     playCount: 1,
     isCompleted: false,
@@ -57,10 +58,11 @@ const mockTextItems: TextItem[] = [
   },
 ];
 
-interface MainScreenProps {}
+const categories = ['フリー書籍', '資格勉強', '論文', '英単語暗記用'];
 
-const MainScreen: React.FC<MainScreenProps> = () => {
+export default function MainScreen() {
   const [textItems, setTextItems] = useState<TextItem[]>(mockTextItems);
+  const [selectedCategory, setSelectedCategory] = useState('フリー書籍');
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
 
   // テーマ色（ダークテーマベース）
@@ -80,39 +82,40 @@ const MainScreen: React.FC<MainScreenProps> = () => {
     }
   };
 
-  // 再生処理
-  const handlePlay = (itemId: string) => {
-    if (currentPlayingId === itemId) {
-      // 一時停止
-      setCurrentPlayingId(null);
-    } else {
-      // 再生開始
-      setCurrentPlayingId(itemId);
-      // TODO: 実際の音声再生処理を実装
-    }
-  };
-
-  // アイテム詳細表示
-  const handleItemPress = (item: TextItem) => {
-    // TODO: 詳細画面への遷移を実装
-    Alert.alert('詳細表示', `"${item.title}" の詳細画面は今後実装予定です。`);
-  };
-
-  // 設定画面へ遷移
-  const handleSettings = () => {
-    Alert.alert('設定', '設定画面は今後実装予定です。');
-  };
-
-  // 新規素材追加画面へ遷移
-  const handleAddMaterial = () => {
-    router.push('/add-material' as any);
-  };
-
   // 時間フォーマット関数
   const formatDuration = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  // 再生処理
+  const handlePlay = (itemId: string) => {
+    if (currentPlayingId === itemId) {
+      setCurrentPlayingId(null);
+    } else {
+      setCurrentPlayingId(itemId);
+    }
+  };
+
+  // 設定画面への遷移
+  const handleSettings = () => {
+    router.push('/settings');
+  };
+
+  // 検索機能（将来実装）
+  const handleSearch = () => {
+    Alert.alert('検索', '検索機能は今後実装予定です。');
+  };
+
+  // 素材追加画面への遷移
+  const handleAddMaterial = () => {
+    router.push('/add-material');
+  };
+
+  // アイテム詳細表示
+  const handleItemPress = (item: TextItem) => {
+    Alert.alert('詳細表示', `"${item.title}" の詳細画面は今後実装予定です。`);
   };
 
   // 重要度に応じた色を取得
@@ -264,8 +267,18 @@ const MainScreen: React.FC<MainScreenProps> = () => {
       justifyContent: 'space-between',
       paddingHorizontal: 16,
       paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    menuButton: {
+      width: 40,
+      height: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
     },
     headerTitle: {
       fontSize: 24,
@@ -282,21 +295,40 @@ const MainScreen: React.FC<MainScreenProps> = () => {
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 20,
+      backgroundColor: theme.colors.background,
+    },
+    categoryScroll: {
       backgroundColor: theme.colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    categoryContainer: {
+      paddingVertical: 12,
+    },
+    categoryButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      marginHorizontal: 4,
+      borderRadius: 16,
+      backgroundColor: theme.colors.background,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    categoryButtonSelected: {
+      backgroundColor: theme.colors.primary + '20',
+      borderColor: theme.colors.primary,
+    },
+    categoryText: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      fontWeight: '500',
+    },
+    categoryTextSelected: {
+      color: theme.colors.primary,
+      fontWeight: '600',
     },
     content: {
       flex: 1,
-    },
-    stats: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      backgroundColor: theme.colors.surface,
-    },
-    statsText: {
-      fontSize: 14,
-      color: theme.colors.textSecondary,
     },
     listContainer: {
       padding: 16,
@@ -456,42 +488,58 @@ const MainScreen: React.FC<MainScreenProps> = () => {
         
         {/* ヘッダー */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>TextCast</Text>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => Alert.alert('メニュー', 'サイドメニューは今後実装予定です。')}
+            >
+              <Ionicons name="menu" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>TextCast</Text>
+          </View>
+          
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.headerButton}
-              onPress={handleSettings}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={handleSearch}
             >
-              <Ionicons
-                name="search-outline"
-                size={20}
-                color={theme.colors.text}
-              />
+              <Ionicons name="search-outline" size={20} color={theme.colors.text} />
             </TouchableOpacity>
+            
             <TouchableOpacity
               style={styles.headerButton}
               onPress={handleSettings}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons
-                name="settings-outline"
-                size={20}
-                color={theme.colors.text}
-              />
+              <Ionicons name="settings-outline" size={20} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* 統計情報 */}
-        <View style={styles.stats}>
-          <Text style={styles.statsText}>
-            {textItems.length}件のテキスト
-          </Text>
-          <Text style={styles.statsText}>
-            未読: {textItems.filter(item => !item.isCompleted).length}件
-          </Text>
-        </View>
+        {/* カテゴリスクロール */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryScroll}
+          contentContainerStyle={styles.categoryContainer}
+        >
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category}
+              style={[
+                styles.categoryButton,
+                selectedCategory === category && styles.categoryButtonSelected
+              ]}
+              onPress={() => setSelectedCategory(category)}
+            >
+              <Text style={[
+                styles.categoryText,
+                selectedCategory === category && styles.categoryTextSelected
+              ]}>
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
         {/* コンテンツエリア */}
         <View style={styles.content}>
@@ -519,6 +567,4 @@ const MainScreen: React.FC<MainScreenProps> = () => {
       </SafeAreaView>
     </View>
   );
-};
-
-export default MainScreen;
+}
