@@ -1,4 +1,4 @@
-// src/types/index.ts - 修正版
+// src/types/index.ts - 完全修正版
 
 export interface TextItem {
   id: string;              // UUID
@@ -19,7 +19,7 @@ export interface TextItem {
   isCompleted: boolean;    // 読了フラグ
   bookmarks: Bookmark[];   // ブックマーク
   notes: Note[];           // メモ
-  isFavorite: boolean;     // お気に入りフラグ
+  isFavorite: boolean;     // お気に入りフラグ - 追加
 }
 
 export interface Bookmark {

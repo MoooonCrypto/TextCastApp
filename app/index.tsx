@@ -1,4 +1,4 @@
-// app/index.tsx - エラー修正版
+// app/index.tsx - 構文エラー修正版
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -11,9 +11,9 @@ import {
   SafeAreaView,
   Modal,
   ScrollView,
+  ListRenderItem,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { TextItem } from '../src/types';
 import { theme } from '../src/constants/theme';
 import TextItemCard from '../src/components/TextItemCard';
@@ -23,7 +23,7 @@ import UnifiedPlayer from '../src/components/UnifiedPlayer';
 interface CategoryItem {
   id: string;
   name: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
 }
 
 // カテゴリ定義
@@ -38,14 +38,22 @@ const CATEGORIES: CategoryItem[] = [
 ];
 
 // AddTextScreen コンポーネント
-const AddTextScreen: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+interface AddTextScreenProps {
+  onClose: () => void;
+}
+
+const AddTextScreen: React.FC<AddTextScreenProps> = ({ onClose }) => {
   return (
     <SafeAreaView style={styles.addScreenContainer}>
       <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
       
       <View style={styles.addScreenHeader}>
         <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close" size={24} color={theme.colors.text} />
+          <Ionicons 
+            name="close" 
+            size={24} 
+            color={theme.colors.text} 
+          />
         </TouchableOpacity>
         <Text style={styles.addScreenTitle}>新規作成</Text>
         <TouchableOpacity onPress={onClose}>
@@ -76,18 +84,21 @@ const AddTextScreen: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 export default function HomeScreen() {
   const [textItems, setTextItems] = useState<TextItem[]>([]);
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
-  const [showAddScreen, setShowAddScreen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentPlayingItem, setCurrentPlayingItem] = useState<TextItem | undefined>();
-  const [playProgress, setPlayProgress] = useState(0);
+  const [showAddScreen, setShowAddScreen] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+
+  // 現在再生中のアイテム
+  const currentItem: TextItem | undefined = textItems.find(
+    (item: TextItem) => item.id === currentPlayingId
+  );
 
   useEffect(() => {
     const dummyData: TextItem[] = [
       {
         id: '1',
         title: 'AI技術の現状と未来',
-        content: 'AI技術は急速に発展しており、様々な分野で活用が期待されています。機械学習、深層学習、自然言語処理など、多岐にわたる技術が実用化されています。',
+        content: 'AI技術は急速に発展しており、様々な分野で活用が期待されています。',
         source: 'url',
         category: 'ビジネス',
         tags: ['AI', 'ビジネス'],
@@ -95,7 +106,7 @@ export default function HomeScreen() {
         createdAt: new Date(Date.now() - 86400000),
         updatedAt: new Date(Date.now() - 86400000),
         duration: 347,
-        lastPosition: 1200,
+        lastPosition: 120,
         playCount: 2,
         isCompleted: false,
         bookmarks: [],
@@ -105,7 +116,7 @@ export default function HomeScreen() {
       {
         id: '2',
         title: '機械学習論文の要約メモ',
-        content: 'この論文では、深層学習における新しいアプローチについて説明しています。特に、注意機構を用いた新しいニューラルネットワークアーキテクチャが提案されています。',
+        content: 'この論文では、深層学習における新しいアプローチについて説明しています。',
         source: 'file',
         category: '論文',
         tags: ['機械学習', '論文'],
@@ -123,7 +134,7 @@ export default function HomeScreen() {
       {
         id: '3',
         title: 'React Native ベストプラクティス',
-        content: 'React Nativeでアプリ開発を行う際のベストプラクティスをまとめました。パフォーマンス最適化、状態管理、ナビゲーションなどについて詳しく説明します。',
+        content: 'React Nativeでアプリ開発を行う際のベストプラクティスをまとめました。',
         source: 'manual',
         category: 'フリー書籍',
         tags: ['React Native', 'プログラミング'],
@@ -141,7 +152,7 @@ export default function HomeScreen() {
       {
         id: '4',
         title: 'TOEIC 英単語 - Level 1',
-        content: 'TOEICで頻出される基本的な英単語をまとめました。business, company, meeting, schedule, project などの重要単語を含んでいます。',
+        content: 'TOEICで頻出される基本的な英単語をまとめました。',
         source: 'manual',
         category: '英単語暗記用',
         tags: ['TOEIC', '英語', '単語'],
@@ -161,112 +172,85 @@ export default function HomeScreen() {
   }, []);
 
   // カテゴリでフィルタリングされたアイテム
-  const filteredItems = selectedCategory === 'all' 
+  const filteredItems: TextItem[] = selectedCategory === 'all' 
     ? textItems 
-    : textItems.filter(item => {
+    : textItems.filter((item: TextItem) => {
         switch (selectedCategory) {
-          case 'free-books': return item.category === 'フリー書籍';
-          case 'study': return item.category === '資格勉強';
-          case 'paper': return item.category === '論文';
-          case 'vocabulary': return item.category === '英単語暗記用';
-          case 'business': return item.category === 'ビジネス';
-          case 'news': return item.category === 'ニュース';
-          default: return true;
+          case 'free-books': 
+            return item.category === 'フリー書籍';
+          case 'study': 
+            return item.category === '資格勉強';
+          case 'paper': 
+            return item.category === '論文';
+          case 'vocabulary': 
+            return item.category === '英単語暗記用';
+          case 'business': 
+            return item.category === 'ビジネス';
+          case 'news': 
+            return item.category === 'ニュース';
+          default: 
+            return true;
         }
       });
 
-  const handlePlay = (item: TextItem) => {
+  // プレイヤー関連ハンドラー
+  const handlePlay = (item: TextItem): void => {
     if (currentPlayingId === item.id) {
       setIsPlaying(!isPlaying);
-      console.log(isPlaying ? '一時停止:' : '再生再開:', item.title);
+      console.log(isPlaying ? '再生停止:' : '再生開始:', item.title);
     } else {
       setCurrentPlayingId(item.id);
-      setCurrentPlayingItem(item);
       setIsPlaying(true);
-      setPlayProgress(0);
-      console.log('新規再生開始:', item.title);
+      console.log('新しいアイテム再生開始:', item.title);
     }
   };
 
-  const handlePlayerPlay = () => {
-    setIsPlaying(true);
+  const handlePlayPause = (): void => {
+    setIsPlaying(!isPlaying);
+    console.log(isPlaying ? '再生停止' : '再生開始');
   };
 
-  const handlePlayerPause = () => {
-    setIsPlaying(false);
-  };
-
-  const handlePlayerNext = () => {
-    if (currentPlayingItem) {
-      const currentIndex = filteredItems.findIndex(item => item.id === currentPlayingItem.id);
-      const nextIndex = (currentIndex + 1) % filteredItems.length;
-      const nextItem = filteredItems[nextIndex];
-      setCurrentPlayingItem(nextItem);
+  const handleNext = (): void => {
+    const currentIndex: number = filteredItems.findIndex(
+      (item: TextItem) => item.id === currentPlayingId
+    );
+    if (currentIndex < filteredItems.length - 1) {
+      const nextItem: TextItem = filteredItems[currentIndex + 1];
       setCurrentPlayingId(nextItem.id);
-      setPlayProgress(0);
-      setIsPlaying(true);
+      console.log('次の曲:', nextItem.title);
     }
   };
 
-  const handlePlayerPrevious = () => {
-    if (currentPlayingItem) {
-      const currentIndex = filteredItems.findIndex(item => item.id === currentPlayingItem.id);
-      const prevIndex = currentIndex === 0 ? filteredItems.length - 1 : currentIndex - 1;
-      const prevItem = filteredItems[prevIndex];
-      setCurrentPlayingItem(prevItem);
+  const handlePrevious = (): void => {
+    const currentIndex: number = filteredItems.findIndex(
+      (item: TextItem) => item.id === currentPlayingId
+    );
+    if (currentIndex > 0) {
+      const prevItem: TextItem = filteredItems[currentIndex - 1];
       setCurrentPlayingId(prevItem.id);
-      setPlayProgress(0);
-      setIsPlaying(true);
+      console.log('前の曲:', prevItem.title);
     }
   };
 
-  const handlePlayerClose = () => {
-    setCurrentPlayingId(null);
-    setCurrentPlayingItem(undefined);
-    setIsPlaying(false);
-    setPlayProgress(0);
-  };
-
-  const handleMenuPress = () => {
-    console.log('メニュー開く');
-    // TODO: サイドメニューの実装
-  };
-
-  const handleSearchPress = () => {
-    console.log('検索画面を開く');
-    // TODO: 検索画面の実装
-  };
-
-  const handleSettingsPress = () => {
-    console.log('設定画面を開く');
-    // TODO: 設定画面の実装
-  };
-
-  const handleItemPress = (item: TextItem) => {
+  const handleItemPress = (item: TextItem): void => {
     console.log('アイテム詳細:', item.title);
   };
 
-  // プログレス更新のシミュレーション（実際のTTS統合時に置き換え）
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
-    if (isPlaying && currentPlayingItem) {
-      interval = setInterval(() => {
-        setPlayProgress(prev => {
-          if (prev >= 1) {
-            // 曲終了時に次の曲へ
-            handlePlayerNext();
-            return 0;
-          }
-          return prev + 0.01; // 1%ずつ増加（実際の進捗に置き換え）
-        });
-      }, 100);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isPlaying, currentPlayingItem]);
+  // ヘッダーボタンハンドラー
+  const handleMenuPress = (): void => {
+    console.log('サイドメニューを開く');
+  };
 
-  const renderItem = ({ item }: { item: TextItem }) => (
+  const handleSearchPress = (): void => {
+    console.log('検索画面を開く');
+  };
+
+  const handleSettingsPress = (): void => {
+    console.log('設定画面を開く');
+  };
+
+  // レンダリング関数
+  const renderItem: ListRenderItem<TextItem> = ({ item }) => (
     <TextItemCard
       item={item}
       onPlay={handlePlay}
@@ -275,8 +259,7 @@ export default function HomeScreen() {
     />
   );
 
-  // カテゴリアイテムのレンダリング
-  const renderCategoryItem = ({ item }: { item: CategoryItem }) => (
+  const renderCategoryItem: ListRenderItem<CategoryItem> = ({ item }) => (
     <TouchableOpacity
       style={[
         styles.categoryItem,
@@ -286,7 +269,7 @@ export default function HomeScreen() {
       activeOpacity={0.7}
     >
       <Ionicons
-        name={item.icon}
+        name={item.icon as keyof typeof Ionicons.glyphMap}
         size={18}
         color={selectedCategory === item.id ? theme.colors.background : theme.colors.text}
         style={styles.categoryIcon}
@@ -301,89 +284,111 @@ export default function HomeScreen() {
   );
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
-        
-        {/* ヘッダー */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.headerButton} onPress={handleMenuPress}>
-            <Ionicons name="menu" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>TextCast</Text>
-          <View style={styles.headerButtons}>
-            <TouchableOpacity style={styles.headerButton} onPress={handleSearchPress}>
-              <Ionicons name="search" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerButton} onPress={handleSettingsPress}>
-              <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* カテゴリ選択 - 水平スクロール */}
-        <View style={styles.categoriesContainer}>
-          <FlatList
-            data={CATEGORIES}
-            renderItem={renderCategoryItem}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesContent}
-          />
-        </View>
-
-        {/* 統計情報 */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.statsText}>
-            {filteredItems.length}件のテキスト
-          </Text>
-          <Text style={styles.statsText}>
-            未読: {filteredItems.filter(item => !item.isCompleted).length}件
-          </Text>
-        </View>
-
-        {/* テキスト一覧 */}
-        <FlatList
-          data={filteredItems}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          style={[styles.listContainer, currentPlayingItem && { paddingBottom: 80 }]}
-          showsVerticalScrollIndicator={false}
-        />
-
-        {/* FAB */}
-        <TouchableOpacity
-          style={[styles.fab, currentPlayingItem && { bottom: theme.spacing.xl + 80 }]}
-          onPress={() => setShowAddScreen(true)}
+    <SafeAreaView style={styles.container}>
+      <StatusBar 
+        barStyle="light-content" 
+        backgroundColor={theme.colors.background} 
+      />
+      
+      {/* ヘッダー */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.headerButton}
+          onPress={handleMenuPress}
         >
-          <Ionicons name="add" size={24} color={theme.colors.background} />
+          <Ionicons 
+            name="menu" 
+            size={24} 
+            color={theme.colors.text} 
+          />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>TextCast</Text>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            onPress={handleSearchPress}
+          >
+            <Ionicons 
+              name="search" 
+              size={24} 
+              color={theme.colors.text} 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            onPress={handleSettingsPress}
+          >
+            <Ionicons 
+              name="settings-outline" 
+              size={24} 
+              color={theme.colors.text} 
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
 
-        {/* UnifiedPlayer */}
-        {currentPlayingItem && (
-          <UnifiedPlayer
-            currentItem={currentPlayingItem}
-            isPlaying={isPlaying}
-            onPlay={handlePlayerPlay}
-            onPause={handlePlayerPause}
-            onNext={handlePlayerNext}
-            onPrevious={handlePlayerPrevious}
-            onClose={handlePlayerClose}
-            progress={playProgress}
-          />
-        )}
+      {/* カテゴリ選択 - 水平スクロール */}
+      <View style={styles.categoriesContainer}>
+        <FlatList
+          data={CATEGORIES}
+          renderItem={renderCategoryItem}
+          keyExtractor={(item: CategoryItem) => item.id}
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContent}
+        />
+      </View>
 
-        {/* AddScreen Modal */}
-        <Modal
-          visible={showAddScreen}
-          animationType="slide"
-          presentationStyle="fullScreen"
-        >
-          <AddTextScreen onClose={() => setShowAddScreen(false)} />
-        </Modal>
-      </SafeAreaView>
-    </GestureHandlerRootView>
+      {/* 統計情報 */}
+      <View style={styles.statsContainer}>
+        <Text style={styles.statsText}>
+          {filteredItems.length}件のテキスト
+        </Text>
+        <Text style={styles.statsText}>
+          未読: {filteredItems.filter((item: TextItem) => !item.isCompleted).length}件
+        </Text>
+      </View>
+
+      {/* テキスト一覧 */}
+      <FlatList
+        data={filteredItems}
+        renderItem={renderItem}
+        keyExtractor={(item: TextItem) => item.id}
+        style={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+      />
+
+      {/* FAB */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setShowAddScreen(true)}
+      >
+        <Ionicons 
+          name="add" 
+          size={24} 
+          color={theme.colors.background} 
+        />
+      </TouchableOpacity>
+
+      {/* AddScreen Modal */}
+      <Modal
+        visible={showAddScreen}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <AddTextScreen onClose={() => setShowAddScreen(false)} />
+      </Modal>
+
+      {/* UnifiedPlayer */}
+      <UnifiedPlayer
+        currentItem={currentItem}
+        isPlaying={isPlaying}
+        onPlayPause={handlePlayPause}
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        visible={!!currentItem}
+      />
+    </SafeAreaView>
   );
 }
 
@@ -430,7 +435,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.s,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
-    maxHeight: 60, // 高さを制限
+    maxHeight: 60,
   },
   
   categoriesContent: {
@@ -447,7 +452,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    height: 40, // 固定高さ
+    height: 40,
   },
   
   categoryItemActive: {
@@ -485,11 +490,12 @@ const styles = StyleSheet.create({
   
   listContainer: {
     flex: 1,
+    paddingBottom: 80, // ミニプレイヤー分のスペース
   },
   
   fab: {
     position: 'absolute',
-    bottom: theme.spacing.xl,
+    bottom: 96, // ミニプレイヤー + 余白
     right: theme.spacing.m,
     width: 56,
     height: 56,
