@@ -1,5 +1,5 @@
 // src/components/SwipeableUnifiedPlayer.tsx
-// 音楽アプリのような動的スワイプ対応プレイヤー
+// 構造的に正しいスワイプ実装
 
 import React, { useCallback } from 'react';
 import {
@@ -20,6 +20,7 @@ import Animated, {
   interpolate,
   withSpring,
   clamp,
+  Extrapolate,
 } from 'react-native-reanimated';
 import {
   PanGestureHandler,
@@ -39,7 +40,7 @@ interface SwipeableUnifiedPlayerProps {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MINI_PLAYER_HEIGHT = 80;
-const SNAP_THRESHOLD = SCREEN_HEIGHT * 0.3; // 画面の30%をスナップ閾値に
+const SNAP_THRESHOLD = 100;
 
 const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
   currentItem,
@@ -49,125 +50,112 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
   onPrevious,
   visible,
 }) => {
-  // translateYは0（ミニプレイヤー状態）から -SCREEN_HEIGHT（フルプレイヤー状態）まで
-  const translateY = useSharedValue(0);
+  // 0 = ミニプレイヤー, 1 = フルプレイヤー
+  const progress = useSharedValue(0);
   
   // スワイプジェスチャーハンドラー
   const gestureHandler = useAnimatedGestureHandler<
     any,
-    { startY: number }
+    { startProgress: number }
   >({
     onStart: (_event, context) => {
-      context.startY = translateY.value;
+      context.startProgress = progress.value;
     },
     
     onActive: (event, context) => {
-      // 上方向（負の値）のスワイプのみ許可
-      const newY = context.startY + event.translationY;
-      // 0（ミニプレイヤー）から-SCREEN_HEIGHT（フルプレイヤー）の範囲でクランプ
-      translateY.value = clamp(newY, -SCREEN_HEIGHT, 0);
+      const dragProgress = -event.translationY / SCREEN_HEIGHT;
+      const newProgress = context.startProgress + dragProgress;
+      progress.value = clamp(newProgress, 0, 1);
     },
     
     onEnd: (event) => {
-      const velocity = event.velocityY;
-      const currentPosition = translateY.value;
+      const velocity = -event.velocityY / SCREEN_HEIGHT;
+      const shouldExpand = 
+        velocity > 0.5 || 
+        (Math.abs(event.translationY) > SNAP_THRESHOLD && event.translationY < 0);
       
-      // 速度またはポジションに基づいてスナップ判定
-      const shouldExpandToFull = 
-        velocity < -500 || // 上向きの速い動き
-        currentPosition < -SNAP_THRESHOLD; // 閾値を越えたドラッグ
-      
-      if (shouldExpandToFull) {
-        // フルプレイヤーに展開
-        translateY.value = withSpring(-SCREEN_HEIGHT, {
-          damping: 20,
-          stiffness: 200,
+      if (shouldExpand) {
+        progress.value = withSpring(1, {
+          damping: 15,
+          stiffness: 150,
         });
       } else {
-        // ミニプレイヤーに戻す
-        translateY.value = withSpring(0, {
-          damping: 20,
-          stiffness: 200,
+        progress.value = withSpring(0, {
+          damping: 15,
+          stiffness: 150,
         });
       }
     },
   });
 
-  // ミニプレイヤーをタップしてフルプレイヤーに展開
   const handleExpandToFull = useCallback(() => {
-    translateY.value = withSpring(-SCREEN_HEIGHT, {
-      damping: 20,
-      stiffness: 200,
+    progress.value = withSpring(1, {
+      damping: 15,
+      stiffness: 150,
     });
   }, []);
 
-  // フルプレイヤーを閉じる
   const handleCloseFullPlayer = useCallback(() => {
-    translateY.value = withSpring(0, {
-      damping: 20,
-      stiffness: 200,
+    progress.value = withSpring(0, {
+      damping: 15,
+      stiffness: 150,
     });
   }, []);
 
-  // 時間フォーマット
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // プログレス計算
   const getProgressPercentage = (): number => {
     if (!currentItem || !currentItem.duration) return 0;
     return ((currentItem.lastPosition || 0) / currentItem.duration) * 100;
   };
 
-  // プレイヤー全体のアニメーションスタイル
-  const playerAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: translateY.value }],
-    };
-  });
-
-  // ミニプレイヤーのopacityアニメーション
-  const miniPlayerOpacityStyle = useAnimatedStyle(() => {
+  // ミニプレイヤーのスタイル
+  const miniPlayerAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
-      translateY.value,
-      [-SCREEN_HEIGHT * 0.5, 0],
-      [0, 1],
-      'clamp'
-    );
-    
-    return {
-      opacity,
-    };
-  });
-
-  // フルプレイヤーのopacityアニメーション
-  const fullPlayerOpacityStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      translateY.value,
-      [-SCREEN_HEIGHT, -SCREEN_HEIGHT * 0.5],
+      progress.value,
+      [0, 0.7],
       [1, 0],
-      'clamp'
+      Extrapolate.CLAMP
+    );
+    
+    const translateY = interpolate(
+      progress.value,
+      [0, 1],
+      [0, MINI_PLAYER_HEIGHT],
+      Extrapolate.CLAMP
     );
     
     return {
       opacity,
+      transform: [{ translateY }],
+      pointerEvents: progress.value > 0.5 ? 'none' : 'auto',
     };
   });
 
-  // フルプレイヤーのscaleアニメーション
-  const fullPlayerScaleStyle = useAnimatedStyle(() => {
-    const scale = interpolate(
-      translateY.value,
-      [-SCREEN_HEIGHT, -SCREEN_HEIGHT * 0.7],
-      [1, 0.9],
-      'clamp'
+  // フルプレイヤーのスタイル
+  const fullPlayerAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      progress.value,
+      [0.3, 1],
+      [0, 1],
+      Extrapolate.CLAMP
+    );
+    
+    const translateY = interpolate(
+      progress.value,
+      [0, 1],
+      [SCREEN_HEIGHT, 0],
+      Extrapolate.CLAMP
     );
     
     return {
-      transform: [{ scale }],
+      opacity,
+      transform: [{ translateY }],
+      pointerEvents: progress.value < 0.5 ? 'none' : 'auto',
     };
   });
 
@@ -176,74 +164,68 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
   }
 
   return (
-    <Animated.View style={[styles.container, playerAnimatedStyle]}>
-      {/* パンジェスチャーハンドラーでラップ */}
+    <>
+      {/* ミニプレイヤー - 常に画面下部に固定 */}
       <PanGestureHandler onGestureEvent={gestureHandler}>
-        <Animated.View style={styles.gestureContainer}>
-          
-          {/* ミニプレイヤー部分 */}
-          <Animated.View style={[styles.miniPlayerContainer, miniPlayerOpacityStyle]}>
-            <TouchableOpacity
-              style={styles.miniPlayer}
-              onPress={handleExpandToFull}
-              activeOpacity={0.95}
-            >
-              {/* プログレスバー */}
-              <View style={styles.miniProgressContainer}>
-                <View style={styles.miniProgressBackground}>
-                  <View 
-                    style={[
-                      styles.miniProgressFill,
-                      { width: `${getProgressPercentage()}%` }
-                    ]} 
-                  />
-                </View>
-              </View>
-
-              <View style={styles.miniPlayerContent}>
-                <View style={styles.miniPlayerInfo}>
-                  <Text style={styles.miniPlayerTitle} numberOfLines={1}>
-                    {currentItem.title}
-                  </Text>
-                  <Text style={styles.miniPlayerArtist} numberOfLines={1}>
-                    {currentItem.category} • {formatTime(currentItem.duration || 0)}
-                  </Text>
-                </View>
-
-                <View style={styles.miniPlayerControls}>
-                  <TouchableOpacity
-                    style={styles.miniControlButton}
-                    onPress={onPlayPause}
-                  >
-                    <Ionicons
-                      name={isPlaying ? 'pause' : 'play'}
-                      size={20}
-                      color={theme.colors.text}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.miniControlButton}
-                    onPress={onNext}
-                  >
-                    <Ionicons 
-                      name="play-skip-forward" 
-                      size={20} 
-                      color={theme.colors.text} 
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-
-          {/* フルプレイヤー部分 */}
-          <Animated.View 
-            style={[
-              styles.fullPlayerContainer, 
-              fullPlayerOpacityStyle,
-              fullPlayerScaleStyle
-            ]}
+        <Animated.View style={[styles.miniPlayerContainer, miniPlayerAnimatedStyle]}>
+          <TouchableOpacity
+            style={styles.miniPlayer}
+            onPress={handleExpandToFull}
+            activeOpacity={0.95}
           >
+            {/* プログレスバー */}
+            <View style={styles.miniProgressContainer}>
+              <View style={styles.miniProgressBackground}>
+                <View 
+                  style={[
+                    styles.miniProgressFill,
+                    { width: `${getProgressPercentage()}%` }
+                  ]} 
+                />
+              </View>
+            </View>
+
+            <View style={styles.miniPlayerContent}>
+              <View style={styles.miniPlayerInfo}>
+                <Text style={styles.miniPlayerTitle} numberOfLines={1}>
+                  {currentItem.title}
+                </Text>
+                <Text style={styles.miniPlayerArtist} numberOfLines={1}>
+                  {currentItem.category} • {formatTime(currentItem.duration || 0)}
+                </Text>
+              </View>
+
+              <View style={styles.miniPlayerControls}>
+                <TouchableOpacity
+                  style={styles.miniControlButton}
+                  onPress={onPlayPause}
+                >
+                  <Ionicons
+                    name={isPlaying ? 'pause' : 'play'}
+                    size={20}
+                    color={theme.colors.text}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.miniControlButton}
+                  onPress={onNext}
+                >
+                  <Ionicons 
+                    name="play-skip-forward" 
+                    size={20} 
+                    color={theme.colors.text} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      </PanGestureHandler>
+
+      {/* フルプレイヤー - 画面全体をオーバーレイ */}
+      <Animated.View style={[styles.fullPlayerContainer, fullPlayerAnimatedStyle]}>
+        <PanGestureHandler onGestureEvent={gestureHandler}>
+          <Animated.View style={styles.fullPlayerContent}>
             <SafeAreaView style={styles.fullPlayerSafeArea}>
               <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
               
@@ -379,36 +361,24 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
               </View>
             </SafeAreaView>
           </Animated.View>
-        </Animated.View>
-      </PanGestureHandler>
-    </Animated.View>
+        </PanGestureHandler>
+      </Animated.View>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: -SCREEN_HEIGHT + MINI_PLAYER_HEIGHT,
-    left: 0,
-    right: 0,
-    height: SCREEN_HEIGHT,
-    zIndex: 1000,
-  },
-
-  gestureContainer: {
-    flex: 1,
-  },
-
-  // ミニプレイヤースタイル
+  // ミニプレイヤー - 常に画面下部に固定
   miniPlayerContainer: {
     position: 'absolute',
-    bottom: SCREEN_HEIGHT - MINI_PLAYER_HEIGHT,
+    bottom: 0,
     left: 0,
     right: 0,
     height: MINI_PLAYER_HEIGHT,
     backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
     borderTopColor: theme.colors.divider,
+    zIndex: 1000,
   },
 
   miniPlayer: {
@@ -472,14 +442,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
 
-  // フルプレイヤースタイル
+  // フルプレイヤー - 画面全体をオーバーレイ
   fullPlayerContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: SCREEN_HEIGHT,
+    bottom: 0,
     backgroundColor: theme.colors.background,
+    zIndex: 2000,
+  },
+
+  fullPlayerContent: {
+    flex: 1,
   },
 
   fullPlayerSafeArea: {
@@ -525,13 +500,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing.l,
   },
 
   artworkContainer: {
-    width: '80%',
+    width: '75%',
     aspectRatio: 1,
-    maxWidth: 300,
+    maxWidth: 280,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.spacing.xl,
@@ -570,7 +545,7 @@ const styles = StyleSheet.create({
   // プログレス
   progressSection: {
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing.l,
     paddingBottom: theme.spacing.l,
   },
 
@@ -606,7 +581,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: theme.spacing.l,
   },
 
   controlButton: {
