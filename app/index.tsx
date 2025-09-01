@@ -1,4 +1,4 @@
-// app/index.tsx - 構文エラー修正版
+// app/index.tsx - スワイプ対応プレイヤー統合版
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -17,7 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { TextItem } from '../src/types';
 import { theme } from '../src/constants/theme';
 import TextItemCard from '../src/components/TextItemCard';
-import UnifiedPlayer from '../src/components/UnifiedPlayer';
+import SwipeableUnifiedPlayer from '../src/components/SwipeableUnifiedPlayer';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // カテゴリ型定義
 interface CategoryItem {
@@ -60,20 +61,16 @@ const AddTextScreen: React.FC<AddTextScreenProps> = ({ onClose }) => {
           <Text style={styles.saveButtonText}>保存</Text>
         </TouchableOpacity>
       </View>
-
+      
       <ScrollView style={styles.addScreenContent}>
         <Text style={styles.inputLabel}>タイトル</Text>
         <View style={styles.inputContainer}>
-          <Text style={styles.placeholderText}>
-            ここにタイトルを入力してください
-          </Text>
+          <Text style={styles.placeholderText}>記事タイトルを入力...</Text>
         </View>
         
         <Text style={styles.inputLabel}>本文</Text>
         <View style={[styles.inputContainer, styles.textAreaContainer]}>
-          <Text style={styles.placeholderText}>
-            ここに本文を入力してください
-          </Text>
+          <Text style={styles.placeholderText}>本文を入力するか、URLやファイルから読み込み...</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -83,47 +80,56 @@ const AddTextScreen: React.FC<AddTextScreenProps> = ({ onClose }) => {
 // メインコンポーネント
 export default function HomeScreen() {
   const [textItems, setTextItems] = useState<TextItem[]>([]);
-  const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
-  const [showAddScreen, setShowAddScreen] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-  // 現在再生中のアイテム
-  const currentItem: TextItem | undefined = textItems.find(
-    (item: TextItem) => item.id === currentPlayingId
+  // フィルタリングされたアイテム
+  const filteredItems: TextItem[] = textItems.filter(item => 
+    selectedCategory === 'all' || item.category === selectedCategory
   );
 
+  // 現在再生中のアイテム
+  const currentPlayingItem: TextItem | undefined = textItems.find(
+    item => item.id === currentPlayingId
+  );
+
+  // ダミーデータの初期化
   useEffect(() => {
     const dummyData: TextItem[] = [
       {
         id: '1',
-        title: 'AI技術の現状と未来',
-        content: 'AI技術は急速に発展しており、様々な分野で活用が期待されています。',
+        title: 'React Native開発のベストプラクティス',
+        content: 'React Nativeでアプリを開発する際に知っておくべきベストプラクティスについて解説します...',
         source: 'url',
-        category: 'ビジネス',
-        tags: ['AI', 'ビジネス'],
+        sourceUrl: 'https://example.com/react-native-best-practices',
+        category: 'プログラミング',
+        tags: ['React Native', '開発', 'ベストプラクティス'],
         importance: 3,
-        createdAt: new Date(Date.now() - 86400000),
-        updatedAt: new Date(Date.now() - 86400000),
-        duration: 347,
-        lastPosition: 120,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        duration: 480, // 8分
+        lastPosition: 120, // 2分地点
         playCount: 2,
         isCompleted: false,
         bookmarks: [],
         notes: [],
-        isFavorite: false,
+        isFavorite: true,
       },
       {
         id: '2',
-        title: '機械学習論文の要約メモ',
-        content: 'この論文では、深層学習における新しいアプローチについて説明しています。',
+        title: '最新のAI技術動向について',
+        content: '2024年のAI技術の最新動向と今後の展望について詳しく説明します...',
         source: 'file',
-        category: '論文',
-        tags: ['機械学習', '論文'],
+        fileName: 'ai-trends-2024.pdf',
+        fileType: 'pdf',
+        category: 'テクノロジー',
+        tags: ['AI', 'テクノロジー', 'トレンド'],
         importance: 2,
-        createdAt: new Date(Date.now() - 172800000),
-        updatedAt: new Date(Date.now() - 172800000),
-        duration: 720,
+        createdAt: new Date(Date.now() - 86400000), // 1日前
+        updatedAt: new Date(Date.now() - 86400000),
+        duration: 720, // 12分
         lastPosition: 0,
         playCount: 0,
         isCompleted: false,
@@ -133,33 +139,33 @@ export default function HomeScreen() {
       },
       {
         id: '3',
-        title: 'React Native ベストプラクティス',
-        content: 'React Nativeでアプリ開発を行う際のベストプラクティスをまとめました。',
+        title: '読書メモ: デザイン思考について',
+        content: 'デザイン思考は、ユーザー中心の問題解決手法として注目されています...',
         source: 'manual',
-        category: 'フリー書籍',
-        tags: ['React Native', 'プログラミング'],
-        importance: 2,
-        createdAt: new Date(Date.now() - 259200000),
+        category: '学習',
+        tags: ['デザイン', '読書', 'UX'],
+        importance: 1,
+        createdAt: new Date(Date.now() - 259200000), // 3日前
         updatedAt: new Date(Date.now() - 259200000),
-        duration: 480,
-        lastPosition: 0,
+        duration: 180, // 3分
+        lastPosition: 180,
         playCount: 1,
-        isCompleted: false,
+        isCompleted: true,
         bookmarks: [],
         notes: [],
-        isFavorite: true,
+        isFavorite: false,
       },
       {
         id: '4',
-        title: 'TOEIC 英単語 - Level 1',
-        content: 'TOEICで頻出される基本的な英単語をまとめました。',
-        source: 'manual',
-        category: '英単語暗記用',
-        tags: ['TOEIC', '英語', '単語'],
-        importance: 1,
-        createdAt: new Date(Date.now() - 345600000),
+        title: '会議での重要ポイント',
+        content: '本日の会議で話し合われた重要なポイントをまとめました...',
+        source: 'camera',
+        category: '個人',
+        tags: ['会議', 'メモ'],
+        importance: 2,
+        createdAt: new Date(Date.now() - 345600000), // 4日前
         updatedAt: new Date(Date.now() - 345600000),
-        duration: 300,
+        duration: 120, // 2分
         lastPosition: 0,
         playCount: 0,
         isCompleted: false,
@@ -171,33 +177,11 @@ export default function HomeScreen() {
     setTextItems(dummyData);
   }, []);
 
-  // カテゴリでフィルタリングされたアイテム
-  const filteredItems: TextItem[] = selectedCategory === 'all' 
-    ? textItems 
-    : textItems.filter((item: TextItem) => {
-        switch (selectedCategory) {
-          case 'free-books': 
-            return item.category === 'フリー書籍';
-          case 'study': 
-            return item.category === '資格勉強';
-          case 'paper': 
-            return item.category === '論文';
-          case 'vocabulary': 
-            return item.category === '英単語暗記用';
-          case 'business': 
-            return item.category === 'ビジネス';
-          case 'news': 
-            return item.category === 'ニュース';
-          default: 
-            return true;
-        }
-      });
-
-  // プレイヤー関連ハンドラー
+  // 再生ハンドラー
   const handlePlay = (item: TextItem): void => {
-    if (currentPlayingId === item.id) {
-      setIsPlaying(!isPlaying);
-      console.log(isPlaying ? '再生停止:' : '再生開始:', item.title);
+    if (currentPlayingId === item.id && isPlaying) {
+      setIsPlaying(false);
+      console.log('再生停止:', item.title);
     } else {
       setCurrentPlayingId(item.id);
       setIsPlaying(true);
@@ -255,7 +239,7 @@ export default function HomeScreen() {
       item={item}
       onPlay={handlePlay}
       onPress={handleItemPress}
-      isPlaying={currentPlayingId === item.id}
+      isPlaying={currentPlayingId === item.id && isPlaying}
     />
   );
 
@@ -271,124 +255,109 @@ export default function HomeScreen() {
       <Ionicons
         name={item.icon as keyof typeof Ionicons.glyphMap}
         size={18}
-        color={selectedCategory === item.id ? theme.colors.background : theme.colors.text}
+        color={
+          selectedCategory === item.id
+            ? theme.colors.background
+            : theme.colors.text
+        }
         style={styles.categoryIcon}
       />
-      <Text style={[
-        styles.categoryText,
-        selectedCategory === item.id && styles.categoryTextActive,
-      ]}>
+      <Text
+        style={[
+          styles.categoryText,
+          selectedCategory === item.id && styles.categoryTextActive,
+        ]}
+      >
         {item.name}
       </Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar 
-        barStyle="light-content" 
-        backgroundColor={theme.colors.background} 
-      />
-      
-      {/* ヘッダー */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.headerButton}
-          onPress={handleMenuPress}
-        >
-          <Ionicons 
-            name="menu" 
-            size={24} 
-            color={theme.colors.text} 
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>TextCast</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity 
-            style={styles.headerButton}
-            onPress={handleSearchPress}
-          >
-            <Ionicons 
-              name="search" 
-              size={24} 
-              color={theme.colors.text} 
-            />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.headerButton}
-            onPress={handleSettingsPress}
-          >
-            <Ionicons 
-              name="settings-outline" 
-              size={24} 
-              color={theme.colors.text} 
-            />
-          </TouchableOpacity>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
+        
+        {/* ヘッダー */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={handleMenuPress} style={styles.headerButton}>
+              <Ionicons name="menu" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>TextCast</Text>
+          </View>
+          
+          <View style={styles.headerRight}>
+            <TouchableOpacity onPress={handleSearchPress} style={styles.headerButton}>
+              <Ionicons name="search" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSettingsPress} style={styles.headerButton}>
+              <Ionicons name="settings" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* カテゴリ選択 - 水平スクロール */}
-      <View style={styles.categoriesContainer}>
+        {/* カテゴリフィルタ */}
+        <View style={styles.categoryContainer}>
+          <FlatList
+            data={CATEGORIES}
+            renderItem={renderCategoryItem}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryList}
+          />
+        </View>
+
+        {/* 統計情報 */}
+        <View style={styles.statsContainer}>
+          <Text style={styles.statsText}>
+            {filteredItems.length}件のアイテム
+          </Text>
+          <Text style={styles.statsText}>
+            再生中: {currentPlayingItem?.title || 'なし'}
+          </Text>
+        </View>
+
+        {/* アイテムリスト */}
         <FlatList
-          data={CATEGORIES}
-          renderItem={renderCategoryItem}
-          keyExtractor={(item: CategoryItem) => item.id}
-          horizontal={true}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesContent}
+          data={filteredItems}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          style={styles.listContainer}
+          contentContainerStyle={{ paddingBottom: 100 }} // プレイヤー分のスペース
         />
-      </View>
 
-      {/* 統計情報 */}
-      <View style={styles.statsContainer}>
-        <Text style={styles.statsText}>
-          {filteredItems.length}件のテキスト
-        </Text>
-        <Text style={styles.statsText}>
-          未読: {filteredItems.filter((item: TextItem) => !item.isCompleted).length}件
-        </Text>
-      </View>
+        {/* FAB */}
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setShowAddModal(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={28} color={theme.colors.background} />
+        </TouchableOpacity>
 
-      {/* テキスト一覧 */}
-      <FlatList
-        data={filteredItems}
-        renderItem={renderItem}
-        keyExtractor={(item: TextItem) => item.id}
-        style={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* FAB */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setShowAddScreen(true)}
-      >
-        <Ionicons 
-          name="add" 
-          size={24} 
-          color={theme.colors.background} 
+        {/* スワイプ対応プレイヤー */}
+        <SwipeableUnifiedPlayer
+          currentItem={currentPlayingItem}
+          isPlaying={isPlaying}
+          onPlayPause={handlePlayPause}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          visible={!!currentPlayingItem}
         />
-      </TouchableOpacity>
 
-      {/* AddScreen Modal */}
-      <Modal
-        visible={showAddScreen}
-        animationType="slide"
-        presentationStyle="fullScreen"
-      >
-        <AddTextScreen onClose={() => setShowAddScreen(false)} />
-      </Modal>
-
-      {/* UnifiedPlayer */}
-      <UnifiedPlayer
-        currentItem={currentItem}
-        isPlaying={isPlaying}
-        onPlayPause={handlePlayPause}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        visible={!!currentItem}
-      />
-    </SafeAreaView>
+        {/* 新規作成モーダル */}
+        <Modal
+          visible={showAddModal}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowAddModal(false)}
+        >
+          <AddTextScreen onClose={() => setShowAddModal(false)} />
+        </Modal>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -400,23 +369,20 @@ const styles = StyleSheet.create({
   
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: theme.spacing.m,
     paddingVertical: theme.spacing.s,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
   },
   
-  headerTitle: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text,
-    flex: 1,
-    textAlign: 'center',
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   
-  headerButtons: {
+  headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -424,21 +390,25 @@ const styles = StyleSheet.create({
   headerButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
+    marginHorizontal: 4,
+  },
+  
+  headerTitle: {
+    fontSize: theme.fontSize.l,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
     marginLeft: theme.spacing.s,
   },
   
-  categoriesContainer: {
+  categoryContainer: {
     paddingVertical: theme.spacing.s,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
-    maxHeight: 60,
   },
   
-  categoriesContent: {
+  categoryList: {
     paddingHorizontal: theme.spacing.m,
   },
   
@@ -490,7 +460,6 @@ const styles = StyleSheet.create({
   
   listContainer: {
     flex: 1,
-    paddingBottom: 80, // ミニプレイヤー分のスペース
   },
   
   fab: {
@@ -503,7 +472,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#ffffff',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
