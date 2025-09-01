@@ -122,10 +122,11 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
       Extrapolate.CLAMP
     );
     
+    // ミニプレイヤーは上方向にスライドして消える
     const translateY = interpolate(
       progress.value,
       [0, 1],
-      [0, MINI_PLAYER_HEIGHT],
+      [0, -MINI_PLAYER_HEIGHT],
       Extrapolate.CLAMP
     );
     
