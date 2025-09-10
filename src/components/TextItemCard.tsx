@@ -1,18 +1,14 @@
 // src/components/TextItemCard.tsx
-
 import React from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
   Pressable,
-  ViewStyle,
-  TextStyle,
+  StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TextItem } from '../types';
-import { theme, createStyles } from '../constants/theme';
+import { theme } from '../constants/theme';
 
 interface TextItemCardProps {
   item: TextItem;
@@ -27,19 +23,11 @@ const TextItemCard: React.FC<TextItemCardProps> = ({
   onPress,
   isPlaying = false,
 }) => {
-  // 再生時間を分:秒形式でフォーマット
-  const formatDuration = (seconds?: number): string => {
-    if (!seconds) return '--:--';
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // 日付を相対表示でフォーマット
+  // 日付フォーマット
   const formatDate = (date: Date): string => {
     const now = new Date();
-    const diffTime = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) return '今日';
     if (diffDays === 1) return '昨日';
@@ -51,56 +39,65 @@ const TextItemCard: React.FC<TextItemCardProps> = ({
     });
   };
 
-  // 進行状況を計算
-  const getProgress = (): number => {
-    if (!item.duration || !item.lastPosition) return 0;
-    return (item.lastPosition / item.content.length) * 100;
+  // 再生時間フォーマット
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds) return '--';
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}分`;
   };
 
-  const progress = getProgress();
+  // 進行状況計算
+  const progress = item.lastPosition && item.duration 
+    ? (item.lastPosition / item.content.length) * 100 
+    : 0;
+
+  // カード全体のタップハンドラー
+  const handleCardPress = () => {
+    // カード自体をタップで再生開始
+    onPlay(item);
+  };
+
+  // 詳細ボタンのタップハンドラー（バブリング停止）
+  const handleDetailsPress = (event: any) => {
+    event.stopPropagation();
+    onPress(item);
+  };
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.container,
-        pressed && styles.pressed,
         isPlaying && styles.playing,
+        pressed && styles.pressed,
       ]}
-      onPress={() => onPress(item)}
+      onPress={handleCardPress}
     >
-      {/* メインコンテンツエリア */}
       <View style={styles.content}>
         {/* ヘッダー行 */}
         <View style={styles.header}>
-          {/* ソースアイコン */}
-          <View style={styles.sourceIcon}>
-            <Ionicons
-              name={getSourceIcon(item.source)}
-              size={16}
-              color={theme.colors.textSecondary}
-            />
-          </View>
+          <Ionicons
+            name={getSourceIcon(item.source)}
+            size={16}
+            color={theme.colors.textSecondary}
+            style={styles.sourceIcon}
+          />
           
-          {/* タイトル */}
           <Text style={styles.title} numberOfLines={2}>
             {item.title}
           </Text>
           
-          {/* 再生ボタン */}
-          <TouchableOpacity
-            style={[
-              styles.playButton,
-              isPlaying && styles.playButtonActive,
-            ]}
-            onPress={() => onPlay(item)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          {/* 詳細ボタン */}
+          <Pressable
+            style={styles.detailsButton}
+            onPress={handleDetailsPress}
+            hitSlop={8}
           >
             <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
-              size={16}
-              color={isPlaying ? theme.colors.background : theme.colors.text}
+              name="information-circle-outline"
+              size={20}
+              color={theme.colors.textSecondary}
             />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* メタ情報行 */}
@@ -155,9 +152,23 @@ const TextItemCard: React.FC<TextItemCardProps> = ({
         {/* カテゴリタグ */}
         {item.category && (
           <View style={styles.categoryContainer}>
-            <Text style={styles.category}>
-              {item.category}
-            </Text>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.category}>
+                {item.category}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* 再生中インジケーター */}
+        {isPlaying && (
+          <View style={styles.playingIndicator}>
+            <Ionicons
+              name="volume-medium"
+              size={16}
+              color={theme.colors.playing}
+            />
+            <Text style={styles.playingText}>再生中</Text>
           </View>
         )}
       </View>
@@ -166,7 +177,7 @@ const TextItemCard: React.FC<TextItemCardProps> = ({
 };
 
 // ソースタイプに応じたアイコンを取得
-const getSourceIcon = (source: TextItem['source']): any => {
+const getSourceIcon = (source: TextItem['source']): keyof typeof Ionicons.glyphMap => {
   switch (source) {
     case 'file':
       return 'document-text-outline';
@@ -196,7 +207,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.l,
-    padding: theme.spacing.m,
+    padding: theme.spacing.s, // paddingを`m`から`s`に変更して縦幅を削減
     marginVertical: theme.spacing.xs,
     marginHorizontal: theme.spacing.m,
     shadowColor: '#ffffff',
@@ -204,66 +215,57 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
-  } as ViewStyle,
+  },
   
   pressed: {
     opacity: 0.8,
     transform: [{ scale: 0.98 }],
-  } as ViewStyle,
+  },
   
   playing: {
     borderWidth: 1,
     borderColor: theme.colors.playing,
     backgroundColor: theme.colors.surfaceSecondary,
-  } as ViewStyle,
+  },
   
   content: {
-    gap: theme.spacing.s,
-  } as ViewStyle,
+    gap: theme.spacing.xs, // gapも`s`から`xs`に変更してさらに縦幅を削減
+  },
   
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: theme.spacing.s,
-  } as ViewStyle,
+  },
   
   sourceIcon: {
     marginTop: 2,
-  } as ViewStyle,
+  },
   
   title: {
     fontSize: theme.fontSize.m,
     fontWeight: theme.fontWeight.medium,
     color: theme.colors.text,
-    lineHeight: theme.fontSize.m * 1.4,
+    lineHeight: theme.fontSize.m * 1.3, // lineHeightも少し削減
     flex: 1,
-  } as TextStyle,
+  },
   
-  playButton: {
-    width: theme.touchTarget.small,
-    height: theme.touchTarget.small,
-    borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.colors.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  } as ViewStyle,
-  
-  playButtonActive: {
-    backgroundColor: theme.colors.playing,
-  } as ViewStyle,
+  detailsButton: {
+    padding: theme.spacing.xs,
+  },
   
   meta: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: theme.spacing.l, // sourceIcon分のインデント
-  } as ViewStyle,
+  },
   
   date: {
     fontSize: theme.fontSize.s,
     fontWeight: theme.fontWeight.normal,
     color: theme.colors.textSecondary,
     lineHeight: theme.fontSize.s * 1.3,
-  } as TextStyle,
+  },
   
   metaDivider: {
     width: 4,
@@ -271,32 +273,32 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: theme.colors.textTertiary,
     marginHorizontal: theme.spacing.s,
-  } as ViewStyle,
+  },
   
   duration: {
     fontSize: theme.fontSize.s,
     fontWeight: theme.fontWeight.normal,
     color: theme.colors.textSecondary,
     lineHeight: theme.fontSize.s * 1.3,
-  } as TextStyle,
+  },
   
   playCount: {
     fontSize: theme.fontSize.s,
     fontWeight: theme.fontWeight.normal,
     color: theme.colors.textSecondary,
     lineHeight: theme.fontSize.s * 1.3,
-  } as TextStyle,
+  },
   
   importance: {
     marginLeft: theme.spacing.s,
-  } as ViewStyle,
+  },
   
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.s,
     paddingLeft: theme.spacing.l,
-  } as ViewStyle,
+  },
   
   progressBackground: {
     flex: 1,
@@ -304,12 +306,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.progressBackground,
     borderRadius: 1,
     overflow: 'hidden',
-  } as ViewStyle,
+  },
   
   progressFill: {
     height: '100%',
     backgroundColor: theme.colors.progress,
-  } as ViewStyle,
+  },
   
   progressText: {
     fontSize: theme.fontSize.xs,
@@ -317,25 +319,39 @@ const styles = StyleSheet.create({
     color: theme.colors.textTertiary,
     lineHeight: theme.fontSize.xs * 1.3,
     minWidth: 30,
-    textAlign: 'right',
-  } as TextStyle,
+  },
   
   categoryContainer: {
     alignSelf: 'flex-start',
     paddingLeft: theme.spacing.l,
-  } as ViewStyle,
+  },
+  
+  categoryBadge: {
+    backgroundColor: theme.colors.accent,
+    paddingHorizontal: theme.spacing.s,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.s,
+  },
   
   category: {
     fontSize: theme.fontSize.xs,
     fontWeight: theme.fontWeight.normal,
     color: theme.colors.textTertiary,
     lineHeight: theme.fontSize.xs * 1.3,
-    backgroundColor: theme.colors.accent,
-    paddingHorizontal: theme.spacing.s,
-    paddingVertical: 2,
-    borderRadius: theme.borderRadius.s,
-    overflow: 'hidden',
-  } as TextStyle,
+  },
+
+  playingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: theme.spacing.l,
+    gap: theme.spacing.xs,
+  },
+
+  playingText: {
+    fontSize: theme.fontSize.xs,
+    fontWeight: theme.fontWeight.medium,
+    color: theme.colors.playing,
+  },
 });
 
 export default TextItemCard;
