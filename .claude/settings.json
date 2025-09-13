@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(echo:*)",
+      "Bash(npm ci)",                 // lockfile に従ったクリーンインストール
+      "Bash(npm run dev)",             // package.json に "dev": "expo start --tunnel" を定義
+      "Bash(npm run build:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run format:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx expo start --tunnel)", // tunnel固定
+      "Bash(npx expo prebuild:*)",
+      "Bash(npx expo run:ios)",
+      "Bash(npx expo run:android)",
+      "Bash(npx expo install:*)",     // 新規ライブラリ追加は必ず確認を求める想定
+      "Bash(true)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(git *:*)",
+      "Read(.env:*)",
+      "Read(id_rsa)",
+      "Read(id_ed25519)",
+      "Read(**/*token*)",
+      "Read(**/*key*)",
+      "Write(.env:*)",
+      "Write(**/secrets/**)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(pkill:*)"
+    ]
+  }
+}

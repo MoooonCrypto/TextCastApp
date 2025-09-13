@@ -4,7 +4,7 @@ module.exports = function(api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      'react-native-reanimated/plugin'  // この行を追加
+      'react-native-worklets/plugin'  // Updated for Reanimated v4
     ],
   };
 };

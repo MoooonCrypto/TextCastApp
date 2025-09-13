@@ -6,7 +6,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "scheme": "textcast",
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.yourname.textcast"
@@ -15,7 +19,9 @@
       "package": "com.yourname.textcast"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
