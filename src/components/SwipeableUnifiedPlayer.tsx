@@ -8,14 +8,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  useAnimatedGestureHandler,
   runOnJS,
   interpolate,
   withSpring,
@@ -23,7 +22,8 @@ import Animated, {
   Extrapolate,
 } from 'react-native-reanimated';
 import {
-  PanGestureHandler,
+  Gesture,
+  GestureDetector,
 } from 'react-native-gesture-handler';
 
 import { TextItem } from '../types';
@@ -54,26 +54,23 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
   const progress = useSharedValue(0);
   
   // スワイプジェスチャーハンドラー
-  const gestureHandler = useAnimatedGestureHandler<
-    any,
-    { startProgress: number }
-  >({
-    onStart: (_event, context) => {
-      context.startProgress = progress.value;
-    },
-    
-    onActive: (event, context) => {
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      'worklet';
+      // Context is handled within the gesture now
+    })
+    .onUpdate((event) => {
+      'worklet';
       const dragProgress = -event.translationY / SCREEN_HEIGHT;
-      const newProgress = context.startProgress + dragProgress;
-      progress.value = clamp(newProgress, 0, 1);
-    },
-    
-    onEnd: (event) => {
+      progress.value = clamp(dragProgress, 0, 1);
+    })
+    .onEnd((event) => {
+      'worklet';
       const velocity = -event.velocityY / SCREEN_HEIGHT;
-      const shouldExpand = 
-        velocity > 0.5 || 
+      const shouldExpand =
+        velocity > 0.5 ||
         (Math.abs(event.translationY) > SNAP_THRESHOLD && event.translationY < 0);
-      
+
       if (shouldExpand) {
         progress.value = withSpring(1, {
           damping: 15,
@@ -85,8 +82,7 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
           stiffness: 150,
         });
       }
-    },
-  });
+    });
 
   const handleExpandToFull = useCallback(() => {
     progress.value = withSpring(1, {
@@ -167,7 +163,7 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
   return (
     <>
       {/* ミニプレイヤー - 常に画面下部に固定 */}
-      <PanGestureHandler onGestureEvent={gestureHandler}>
+      <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.miniPlayerContainer, miniPlayerAnimatedStyle]}>
           <TouchableOpacity
             style={styles.miniPlayer}
@@ -221,11 +217,11 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
             </View>
           </TouchableOpacity>
         </Animated.View>
-      </PanGestureHandler>
+      </GestureDetector>
 
       {/* フルプレイヤー - 画面全体をオーバーレイ */}
       <Animated.View style={[styles.fullPlayerContainer, fullPlayerAnimatedStyle]}>
-        <PanGestureHandler onGestureEvent={gestureHandler}>
+        <GestureDetector gesture={panGesture}>
           <Animated.View style={styles.fullPlayerContent}>
             <SafeAreaView style={styles.fullPlayerSafeArea}>
               <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
@@ -362,7 +358,7 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
               </View>
             </SafeAreaView>
           </Animated.View>
-        </PanGestureHandler>
+        </GestureDetector>
       </Animated.View>
     </>
   );
