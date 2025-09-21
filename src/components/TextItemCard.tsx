@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.l,
-    padding: theme.spacing.s, // paddingを`m`から`s`に変更して縦幅を削減
+    padding: theme.spacing.xs, // さらに削減: s → xs
     marginVertical: theme.spacing.xs,
     marginHorizontal: theme.spacing.m,
     shadowColor: '#ffffff',
@@ -235,18 +235,18 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: theme.spacing.s,
+    gap: theme.spacing.xs, // 削減: s → xs
   },
   
   sourceIcon: {
-    marginTop: 2,
+    marginTop: 1, // 削減: 2 → 1
   },
   
   title: {
     fontSize: theme.fontSize.m,
     fontWeight: theme.fontWeight.medium,
     color: theme.colors.text,
-    lineHeight: theme.fontSize.m * 1.3, // lineHeightも少し削減
+    lineHeight: theme.fontSize.m * 1.2, // 削減: 1.3 → 1.2
     flex: 1,
   },
   
@@ -257,47 +257,47 @@ const styles = StyleSheet.create({
   meta: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: theme.spacing.l, // sourceIcon分のインデント
+    paddingLeft: theme.spacing.m, // 削減: l → m
   },
   
   date: {
     fontSize: theme.fontSize.s,
     fontWeight: theme.fontWeight.normal,
     color: theme.colors.textSecondary,
-    lineHeight: theme.fontSize.s * 1.3,
+    lineHeight: theme.fontSize.s * 1.2, // 削減: 1.3 → 1.2
   },
   
   metaDivider: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 3, // 削減: 4 → 3
+    height: 3, // 削減: 4 → 3
+    borderRadius: 1.5,
     backgroundColor: theme.colors.textTertiary,
-    marginHorizontal: theme.spacing.s,
+    marginHorizontal: theme.spacing.xs, // 削減: s → xs
   },
   
   duration: {
     fontSize: theme.fontSize.s,
     fontWeight: theme.fontWeight.normal,
     color: theme.colors.textSecondary,
-    lineHeight: theme.fontSize.s * 1.3,
+    lineHeight: theme.fontSize.s * 1.2, // 削減: 1.3 → 1.2
   },
   
   playCount: {
     fontSize: theme.fontSize.s,
     fontWeight: theme.fontWeight.normal,
     color: theme.colors.textSecondary,
-    lineHeight: theme.fontSize.s * 1.3,
+    lineHeight: theme.fontSize.s * 1.2, // 削減: 1.3 → 1.2
   },
   
   importance: {
-    marginLeft: theme.spacing.s,
+    marginLeft: theme.spacing.xs, // 削減: s → xs
   },
   
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.s,
-    paddingLeft: theme.spacing.l,
+    gap: theme.spacing.xs, // 削減: s → xs
+    paddingLeft: theme.spacing.m, // 削減: l → m
   },
   
   progressBackground: {
@@ -323,13 +323,13 @@ const styles = StyleSheet.create({
   
   categoryContainer: {
     alignSelf: 'flex-start',
-    paddingLeft: theme.spacing.l,
+    paddingLeft: theme.spacing.m, // 削減: l → m
   },
   
   categoryBadge: {
     backgroundColor: theme.colors.accent,
-    paddingHorizontal: theme.spacing.s,
-    paddingVertical: 2,
+    paddingHorizontal: theme.spacing.xs, // 削減: s → xs
+    paddingVertical: 1, // 削減: 2 → 1
     borderRadius: theme.borderRadius.s,
   },
   
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   playingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: theme.spacing.l,
+    paddingLeft: theme.spacing.m, // 削減: l → m
     gap: theme.spacing.xs,
   },
 

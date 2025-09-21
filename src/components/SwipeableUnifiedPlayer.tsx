@@ -20,6 +20,7 @@ import Animated, {
   withSpring,
   clamp,
   Extrapolate,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import {
   Gesture,
@@ -42,6 +43,15 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MINI_PLAYER_HEIGHT = 80;
 const SNAP_THRESHOLD = 100;
 
+// 5段階遷移の閾値定義
+const TRANSITION_PHASES = {
+  MINI: 0,           // 完全ミニプレイヤー
+  START: 0.2,        // スワイプ開始・プリアニメーション
+  PARTIAL: 0.4,      // 画面下5分の1でUI部分切り替え
+  EXPANDING: 0.7,    // UI拡大・背景変化
+  FULL: 1.0         // 完全フルプレイヤー
+};
+
 const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
   currentItem,
   isPlaying,
@@ -52,49 +62,153 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
 }) => {
   // 0 = ミニプレイヤー, 1 = フルプレイヤー
   const progress = useSharedValue(0);
+  const gestureStartValue = useSharedValue(0);
+
+  // 強制的に状態をリセットする関数
+  const forceResetToMini = useCallback(() => {
+    'worklet';
+    progress.value = TRANSITION_PHASES.MINI;
+    gestureStartValue.value = TRANSITION_PHASES.MINI;
+  }, []);
+
+  // 新しいアイテムが選択された時に状態を強制的にリセット
+  React.useEffect(() => {
+    if (currentItem && visible) {
+      console.log('[SwipeableUnifiedPlayer] Resetting player state for new item:', currentItem.id);
+
+      // 進行中のアニメーションを停止
+      cancelAnimation(progress);
+      cancelAnimation(gestureStartValue);
+
+      // 即座にリセット
+      progress.value = 0;
+      gestureStartValue.value = 0;
+      console.log('[SwipeableUnifiedPlayer] Immediate reset complete - progress:', progress.value);
+
+      // 追加の安全策として少し遅延してもう一度リセット
+      const resetTimer = setTimeout(() => {
+        cancelAnimation(progress);
+        cancelAnimation(gestureStartValue);
+        progress.value = 0;
+        gestureStartValue.value = 0;
+        console.log('[SwipeableUnifiedPlayer] Secondary reset complete - progress:', progress.value);
+      }, 50);
+
+      return () => clearTimeout(resetTimer);
+    }
+  }, [currentItem?.id, visible]);
   
-  // スワイプジェスチャーハンドラー
+  // スワイプジェスチャーハンドラー（改良版）
   const panGesture = Gesture.Pan()
+    .minDistance(1) // より小さな距離で反応するように変更
+    .failOffsetX([-10, 10]) // 水平方向の動きが大きい場合は失敗
     .onStart(() => {
       'worklet';
-      // Context is handled within the gesture now
+      // ジェスチャー開始時の進行状況を保存
+      gestureStartValue.value = progress.value;
+      console.log('[Gesture] onStart - current progress:', progress.value);
     })
     .onUpdate((event) => {
       'worklet';
-      const dragProgress = -event.translationY / SCREEN_HEIGHT;
-      progress.value = clamp(dragProgress, 0, 1);
+      // 開始時の状態からの相対的な変化を計算
+      const startValue = gestureStartValue.value;
+      const dragDistance = -event.translationY; // 上方向を正の値に
+      const dragProgress = dragDistance / (SCREEN_HEIGHT * 0.5); // 画面の50%で完了（より感度を上げる）
+
+      // 開始値からの相対的な変化を適用
+      const newProgress = startValue + dragProgress;
+      progress.value = clamp(newProgress, 0, 1);
     })
     .onEnd((event) => {
       'worklet';
       const velocity = -event.velocityY / SCREEN_HEIGHT;
-      const shouldExpand =
-        velocity > 0.5 ||
-        (Math.abs(event.translationY) > SNAP_THRESHOLD && event.translationY < 0);
+      const currentProgress = progress.value;
 
-      if (shouldExpand) {
-        progress.value = withSpring(1, {
-          damping: 15,
-          stiffness: 150,
-        });
-      } else {
-        progress.value = withSpring(0, {
-          damping: 15,
-          stiffness: 150,
-        });
-      }
+      // より敏感な判定ロジック
+      const velocityThreshold = 0.2; // 閾値を下げる
+      const progressThreshold = 0.3; // 閾値を下げる
+
+      const shouldExpand =
+        velocity > velocityThreshold ||
+        (Math.abs(velocity) < velocityThreshold && currentProgress > progressThreshold);
+
+      // スプリングアニメーション設定（より滑らかに）
+      const springConfig = {
+        damping: 20,
+        stiffness: 250,
+        mass: 0.8,
+      };
+
+      const targetValue = shouldExpand ? TRANSITION_PHASES.FULL : TRANSITION_PHASES.MINI;
+      progress.value = withSpring(targetValue, springConfig);
+    });
+
+  // タップジェスチャー（ミニプレイヤー用）
+  const tapGesture = Gesture.Tap()
+    .onEnd(() => {
+      'worklet';
+      progress.value = withSpring(TRANSITION_PHASES.FULL, {
+        damping: 20,
+        stiffness: 200,
+        mass: 0.8,
+      });
+    });
+
+  // 下方向スワイプジェスチャー（フルプレイヤー用）
+  const downSwipeGesture = Gesture.Pan()
+    .minDistance(1)
+    .failOffsetX([-10, 10])
+    .onStart(() => {
+      'worklet';
+      gestureStartValue.value = progress.value;
+    })
+    .onUpdate((event) => {
+      'worklet';
+      // フルプレイヤー状態でのみ動作
+      if (gestureStartValue.value < 0.8) return;
+      
+      const startValue = gestureStartValue.value;
+      const dragDistance = event.translationY; // 下方向を正の値に
+      const dragProgress = dragDistance / (SCREEN_HEIGHT * 0.4);
+
+      const newProgress = startValue - dragProgress;
+      progress.value = clamp(newProgress, 0, 1);
+    })
+    .onEnd((event) => {
+      'worklet';
+      const velocity = event.velocityY / SCREEN_HEIGHT;
+      const currentProgress = progress.value;
+
+      const velocityThreshold = 0.2;
+      const progressThreshold = 0.7;
+
+      const shouldCollapse =
+        velocity > velocityThreshold ||
+        (Math.abs(velocity) < velocityThreshold && currentProgress < progressThreshold);
+
+      const springConfig = {
+        damping: 20,
+        stiffness: 250,
+        mass: 0.8,
+      };
+
+      const targetValue = shouldCollapse ? TRANSITION_PHASES.MINI : TRANSITION_PHASES.FULL;
+      progress.value = withSpring(targetValue, springConfig);
     });
 
   const handleExpandToFull = useCallback(() => {
-    progress.value = withSpring(1, {
-      damping: 15,
-      stiffness: 150,
+    progress.value = withSpring(TRANSITION_PHASES.FULL, {
+      damping: 20,
+      stiffness: 200,
+      mass: 0.8,
     });
   }, []);
 
   const handleCloseFullPlayer = useCallback(() => {
-    progress.value = withSpring(0, {
-      damping: 15,
-      stiffness: 150,
+    progress.value = withSpring(TRANSITION_PHASES.MINI, {
+      damping: 20,
+      stiffness: 200,
+      mass: 0.8,
     });
   }, []);
 
@@ -109,50 +223,158 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
     return ((currentItem.lastPosition || 0) / currentItem.duration) * 100;
   };
 
-  // ミニプレイヤーのスタイル
-  const miniPlayerAnimatedStyle = useAnimatedStyle(() => {
+  // フルプレイヤーヘッダーのアニメーションスタイル
+  const headerAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       progress.value,
-      [0, 0.7],
-      [1, 0],
+      [TRANSITION_PHASES.PARTIAL, TRANSITION_PHASES.EXPANDING],
+      [0, 1],
       Extrapolate.CLAMP
     );
-    
-    // ミニプレイヤーは上方向にスライドして消える
+
     const translateY = interpolate(
       progress.value,
-      [0, 1],
-      [0, -MINI_PLAYER_HEIGHT],
+      [TRANSITION_PHASES.PARTIAL, TRANSITION_PHASES.EXPANDING],
+      [-20, 0],
       Extrapolate.CLAMP
     );
-    
+
     return {
       opacity,
       transform: [{ translateY }],
-      pointerEvents: progress.value > 0.5 ? 'none' : 'auto',
     };
   });
 
-  // フルプレイヤーのスタイル
-  const fullPlayerAnimatedStyle = useAnimatedStyle(() => {
+  // アートワークのアニメーションスタイル
+  const artworkAnimatedStyle = useAnimatedStyle(() => {
+    const scale = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.START, TRANSITION_PHASES.PARTIAL, TRANSITION_PHASES.EXPANDING],
+      [0.7, 0.85, 1],
+      Extrapolate.CLAMP
+    );
+
     const opacity = interpolate(
       progress.value,
-      [0.3, 1],
+      [TRANSITION_PHASES.START, TRANSITION_PHASES.PARTIAL],
       [0, 1],
       Extrapolate.CLAMP
     );
-    
+
+    return {
+      opacity,
+      transform: [{ scale }],
+    };
+  });
+
+  // コントロールボタンのアニメーションスタイル
+  const controlsAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.EXPANDING, TRANSITION_PHASES.FULL],
+      [0, 1],
+      Extrapolate.CLAMP
+    );
+
     const translateY = interpolate(
       progress.value,
-      [0, 1],
-      [SCREEN_HEIGHT, 0],
+      [TRANSITION_PHASES.EXPANDING, TRANSITION_PHASES.FULL],
+      [30, 0],
       Extrapolate.CLAMP
     );
-    
+
     return {
       opacity,
       transform: [{ translateY }],
-      pointerEvents: progress.value < 0.5 ? 'none' : 'auto',
+    };
+  });
+
+  // プログレスセクションのアニメーションスタイル
+  const progressAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.PARTIAL, TRANSITION_PHASES.EXPANDING],
+      [0, 1],
+      Extrapolate.CLAMP
+    );
+
+    const scale = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.PARTIAL, TRANSITION_PHASES.EXPANDING],
+      [0.9, 1],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      opacity,
+      transform: [{ scale }],
+    };
+  });
+
+  // ミニプレイヤーのスタイル（段階的遷移）
+  const miniPlayerAnimatedStyle = useAnimatedStyle(() => {
+    // 段階的なopacity変化
+    const opacity = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.MINI, TRANSITION_PHASES.START, TRANSITION_PHASES.PARTIAL],
+      [1, 0.8, 0],
+      Extrapolate.CLAMP
+    );
+
+    // より自然な移動：最初は少し、後で急激に
+    const translateY = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.MINI, TRANSITION_PHASES.PARTIAL, TRANSITION_PHASES.FULL],
+      [0, -MINI_PLAYER_HEIGHT * 0.3, -MINI_PLAYER_HEIGHT],
+      Extrapolate.CLAMP
+    );
+
+    // スケール効果で自然な遷移
+    const scale = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.MINI, TRANSITION_PHASES.START, TRANSITION_PHASES.PARTIAL],
+      [1, 0.95, 0.9],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      opacity,
+      transform: [{ translateY }, { scale }],
+      pointerEvents: progress.value > TRANSITION_PHASES.PARTIAL ? 'none' : 'auto',
+    };
+  });
+
+  // フルプレイヤーのスタイル（段階的遷移）
+  const fullPlayerAnimatedStyle = useAnimatedStyle(() => {
+    // 段階的なopacity変化：部分的に表示開始
+    const opacity = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.START, TRANSITION_PHASES.PARTIAL, TRANSITION_PHASES.EXPANDING],
+      [0, 0.3, 1],
+      Extrapolate.CLAMP
+    );
+
+    // より自然な上昇アニメーション
+    const translateY = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.MINI, TRANSITION_PHASES.START, TRANSITION_PHASES.PARTIAL, TRANSITION_PHASES.FULL],
+      [SCREEN_HEIGHT, SCREEN_HEIGHT * 0.7, SCREEN_HEIGHT * 0.2, 0],
+      Extrapolate.CLAMP
+    );
+
+    // 背景の暗くなる効果
+    const backgroundColor = interpolate(
+      progress.value,
+      [TRANSITION_PHASES.MINI, TRANSITION_PHASES.PARTIAL, TRANSITION_PHASES.FULL],
+      [0, 0.3, 0.95],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      opacity,
+      backgroundColor: `rgba(0, 0, 0, ${backgroundColor})`,
+      transform: [{ translateY }],
+      pointerEvents: progress.value < TRANSITION_PHASES.PARTIAL ? 'none' : 'auto',
     };
   });
 
@@ -160,16 +382,15 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
     return null;
   }
 
+  // ミニプレイヤーとタップジェスチャーを組み合わせ
+  const miniPlayerGesture = Gesture.Simultaneous(panGesture, tapGesture);
+
   return (
     <>
       {/* ミニプレイヤー - 常に画面下部に固定 */}
-      <GestureDetector gesture={panGesture}>
+      <GestureDetector gesture={miniPlayerGesture}>
         <Animated.View style={[styles.miniPlayerContainer, miniPlayerAnimatedStyle]}>
-          <TouchableOpacity
-            style={styles.miniPlayer}
-            onPress={handleExpandToFull}
-            activeOpacity={0.95}
-          >
+          <View style={styles.miniPlayer}>
             {/* プログレスバー */}
             <View style={styles.miniProgressContainer}>
               <View style={styles.miniProgressBackground}>
@@ -215,19 +436,19 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
                 </TouchableOpacity>
               </View>
             </View>
-          </TouchableOpacity>
+          </View>
         </Animated.View>
       </GestureDetector>
 
       {/* フルプレイヤー - 画面全体をオーバーレイ */}
       <Animated.View style={[styles.fullPlayerContainer, fullPlayerAnimatedStyle]}>
-        <GestureDetector gesture={panGesture}>
+        <GestureDetector gesture={downSwipeGesture}>
           <Animated.View style={styles.fullPlayerContent}>
             <SafeAreaView style={styles.fullPlayerSafeArea}>
               <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
               
               {/* フルプレイヤーヘッダー */}
-              <View style={styles.fullPlayerHeader}>
+              <Animated.View style={[styles.fullPlayerHeader, headerAnimatedStyle]}>
                 <TouchableOpacity
                   style={styles.headerButton}
                   onPress={handleCloseFullPlayer}
@@ -247,17 +468,17 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
                 </View>
                 
                 <TouchableOpacity style={styles.headerButton}>
-                  <Ionicons 
-                    name="ellipsis-horizontal" 
-                    size={24} 
-                    color={theme.colors.text} 
+                  <Ionicons
+                    name="ellipsis-horizontal"
+                    size={24}
+                    color={theme.colors.text}
                   />
                 </TouchableOpacity>
-              </View>
+              </Animated.View>
 
               {/* アートワークセクション */}
               <View style={styles.artworkSection}>
-                <View style={styles.artworkContainer}>
+                <Animated.View style={[styles.artworkContainer, artworkAnimatedStyle]}>
                   <View style={styles.artworkPlaceholder}>
                     <Ionicons 
                       name="document-text" 
@@ -265,8 +486,8 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
                       color={theme.colors.textSecondary} 
                     />
                   </View>
-                </View>
-                
+                </Animated.View>
+
                 <View style={styles.trackInfo}>
                   <Text style={styles.trackTitle} numberOfLines={2}>
                     {currentItem.title}
@@ -278,7 +499,7 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
               </View>
 
               {/* プログレスセクション */}
-              <View style={styles.progressSection}>
+              <Animated.View style={[styles.progressSection, progressAnimatedStyle]}>
                 <View style={styles.progressContainer}>
                   <View style={styles.progressBackground}>
                     <View 
@@ -298,10 +519,10 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
                     {formatTime(currentItem.duration || 0)}
                   </Text>
                 </View>
-              </View>
+              </Animated.View>
 
               {/* メインコントロール */}
-              <View style={styles.controlsContainer}>
+              <Animated.View style={[styles.controlsContainer, controlsAnimatedStyle]}>
                 <TouchableOpacity 
                   style={styles.controlButton}
                   onPress={onPrevious}
@@ -324,17 +545,17 @@ const SwipeableUnifiedPlayer: React.FC<SwipeableUnifiedPlayerProps> = ({
                   />
                 </TouchableOpacity>
                 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.controlButton}
                   onPress={onNext}
                 >
-                  <Ionicons 
-                    name="play-skip-forward" 
-                    size={32} 
-                    color={theme.colors.text} 
+                  <Ionicons
+                    name="play-skip-forward"
+                    size={32}
+                    color={theme.colors.text}
                   />
                 </TouchableOpacity>
-              </View>
+              </Animated.View>
 
               {/* 追加コントロール */}
               <View style={styles.additionalControls}>

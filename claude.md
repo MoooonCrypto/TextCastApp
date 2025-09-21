@@ -9,6 +9,7 @@
 
 ## 2. 開発ルール
 - デバッグ時は必ず `npx expo start --tunnel`
+- **Claude は絶対にサーバーを起動しない**（人間が手動で行う）
 - npm の扱い:
   - `npm ci` → lockfile に従って環境を完全再現
   - `npx expo install <パッケージ>` → 新規追加は必ず人間に確認
@@ -21,10 +22,10 @@
 ## 3. 許可・禁止事項
 - 許可:
   - bash: mkdir, touch, ls, cat, find, echo
-  - npm: ci, run dev, run build, run test, run lint, run format
-  - expo: start --tunnel, run:ios, run:android, prebuild, install
+  - npm: ci, run build, run test, run lint, run format
 - 禁止:
   - bash: sudo, pkill, rm -rf
+  - **サーバー起動コマンド全般**: npm run dev, npx expo start, expo start 等
   - git 操作全般
   - 読み込み禁止: .env, id_rsa, id_ed25519, **/*token*, **/*key*
   - 書き込み禁止: .env, **/secrets/**
