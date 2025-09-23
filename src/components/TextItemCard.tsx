@@ -23,37 +23,8 @@ const TextItemCard: React.FC<TextItemCardProps> = ({
   onPress,
   isPlaying = false,
 }) => {
-  // 日付フォーマット
-  const formatDate = (date: Date): string => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return '今日';
-    if (diffDays === 1) return '昨日';
-    if (diffDays < 7) return `${diffDays}日前`;
-    
-    return date.toLocaleDateString('ja-JP', {
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  // 再生時間フォーマット
-  const formatDuration = (seconds?: number): string => {
-    if (!seconds) return '--';
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes}分`;
-  };
-
-  // 進行状況計算
-  const progress = item.lastPosition && item.duration 
-    ? (item.lastPosition / item.content.length) * 100 
-    : 0;
-
   // カード全体のタップハンドラー
   const handleCardPress = () => {
-    // カード自体をタップで再生開始
     onPlay(item);
   };
 
@@ -73,18 +44,27 @@ const TextItemCard: React.FC<TextItemCardProps> = ({
       onPress={handleCardPress}
     >
       <View style={styles.content}>
-        {/* ヘッダー行 */}
+        {/* シンプルなタイトル行のみ */}
         <View style={styles.header}>
           <Ionicons
             name={getSourceIcon(item.source)}
-            size={16}
+            size={14}
             color={theme.colors.textSecondary}
             style={styles.sourceIcon}
           />
           
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={styles.title} numberOfLines={1}>
             {item.title}
           </Text>
+          
+          {/* 再生中インジケーター */}
+          {isPlaying && (
+            <Ionicons
+              name="volume-medium"
+              size={16}
+              color={theme.colors.playing}
+            />
+          )}
           
           {/* 詳細ボタン */}
           <Pressable
@@ -93,84 +73,12 @@ const TextItemCard: React.FC<TextItemCardProps> = ({
             hitSlop={8}
           >
             <Ionicons
-              name="information-circle-outline"
-              size={20}
+              name="chevron-forward"
+              size={16}
               color={theme.colors.textSecondary}
             />
           </Pressable>
         </View>
-
-        {/* メタ情報行 */}
-        <View style={styles.meta}>
-          <Text style={styles.date}>
-            {formatDate(item.createdAt)}
-          </Text>
-          
-          <View style={styles.metaDivider} />
-          
-          <Text style={styles.duration}>
-            {formatDuration(item.duration)}
-          </Text>
-          
-          {item.playCount > 0 && (
-            <>
-              <View style={styles.metaDivider} />
-              <Text style={styles.playCount}>
-                {item.playCount}回再生
-              </Text>
-            </>
-          )}
-          
-          {item.importance > 1 && (
-            <View style={styles.importance}>
-              <Ionicons
-                name="star"
-                size={12}
-                color={getImportanceColor(item.importance)}
-              />
-            </View>
-          )}
-        </View>
-
-        {/* 進行状況バー */}
-        {progress > 0 && (
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBackground}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${Math.min(progress, 100)}%` },
-                ]}
-              />
-            </View>
-            <Text style={styles.progressText}>
-              {Math.round(progress)}%
-            </Text>
-          </View>
-        )}
-
-        {/* カテゴリタグ */}
-        {item.category && (
-          <View style={styles.categoryContainer}>
-            <View style={styles.categoryBadge}>
-              <Text style={styles.category}>
-                {item.category}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* 再生中インジケーター */}
-        {isPlaying && (
-          <View style={styles.playingIndicator}>
-            <Ionicons
-              name="volume-medium"
-              size={16}
-              color={theme.colors.playing}
-            />
-            <Text style={styles.playingText}>再生中</Text>
-          </View>
-        )}
       </View>
     </Pressable>
   );
@@ -206,8 +114,9 @@ const getImportanceColor = (importance: number): string => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.l,
-    padding: theme.spacing.xs, // さらに削減: s → xs
+    borderRadius: theme.borderRadius.m,
+    paddingVertical: theme.spacing.s,
+    paddingHorizontal: theme.spacing.m,
     marginVertical: theme.spacing.xs,
     marginHorizontal: theme.spacing.m,
     shadowColor: '#ffffff',
@@ -215,6 +124,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
+    minHeight: 52,
   },
   
   pressed: {
@@ -229,128 +139,29 @@ const styles = StyleSheet.create({
   },
   
   content: {
-    gap: theme.spacing.xs, // gapも`s`から`xs`に変更してさらに縦幅を削減
+    justifyContent: 'center',
   },
   
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.xs, // 削減: s → xs
+    alignItems: 'center',
+    gap: theme.spacing.s,
   },
   
   sourceIcon: {
-    marginTop: 1, // 削減: 2 → 1
+    // アイコンを中央揃えに
   },
   
   title: {
     fontSize: theme.fontSize.m,
     fontWeight: theme.fontWeight.medium,
     color: theme.colors.text,
-    lineHeight: theme.fontSize.m * 1.2, // 削減: 1.3 → 1.2
     flex: 1,
   },
   
   detailsButton: {
     padding: theme.spacing.xs,
-  },
-  
-  meta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: theme.spacing.m, // 削減: l → m
-  },
-  
-  date: {
-    fontSize: theme.fontSize.s,
-    fontWeight: theme.fontWeight.normal,
-    color: theme.colors.textSecondary,
-    lineHeight: theme.fontSize.s * 1.2, // 削減: 1.3 → 1.2
-  },
-  
-  metaDivider: {
-    width: 3, // 削減: 4 → 3
-    height: 3, // 削減: 4 → 3
-    borderRadius: 1.5,
-    backgroundColor: theme.colors.textTertiary,
-    marginHorizontal: theme.spacing.xs, // 削減: s → xs
-  },
-  
-  duration: {
-    fontSize: theme.fontSize.s,
-    fontWeight: theme.fontWeight.normal,
-    color: theme.colors.textSecondary,
-    lineHeight: theme.fontSize.s * 1.2, // 削減: 1.3 → 1.2
-  },
-  
-  playCount: {
-    fontSize: theme.fontSize.s,
-    fontWeight: theme.fontWeight.normal,
-    color: theme.colors.textSecondary,
-    lineHeight: theme.fontSize.s * 1.2, // 削減: 1.3 → 1.2
-  },
-  
-  importance: {
-    marginLeft: theme.spacing.xs, // 削減: s → xs
-  },
-  
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs, // 削減: s → xs
-    paddingLeft: theme.spacing.m, // 削減: l → m
-  },
-  
-  progressBackground: {
-    flex: 1,
-    height: 2,
-    backgroundColor: theme.colors.progressBackground,
-    borderRadius: 1,
-    overflow: 'hidden',
-  },
-  
-  progressFill: {
-    height: '100%',
-    backgroundColor: theme.colors.progress,
-  },
-  
-  progressText: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.normal,
-    color: theme.colors.textTertiary,
-    lineHeight: theme.fontSize.xs * 1.3,
-    minWidth: 30,
-  },
-  
-  categoryContainer: {
-    alignSelf: 'flex-start',
-    paddingLeft: theme.spacing.m, // 削減: l → m
-  },
-  
-  categoryBadge: {
-    backgroundColor: theme.colors.accent,
-    paddingHorizontal: theme.spacing.xs, // 削減: s → xs
-    paddingVertical: 1, // 削減: 2 → 1
-    borderRadius: theme.borderRadius.s,
-  },
-  
-  category: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.normal,
-    color: theme.colors.textTertiary,
-    lineHeight: theme.fontSize.xs * 1.3,
-  },
-
-  playingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: theme.spacing.m, // 削減: l → m
-    gap: theme.spacing.xs,
-  },
-
-  playingText: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.playing,
+    marginLeft: theme.spacing.xs,
   },
 });
 
