@@ -1,88 +1,103 @@
-// src/components/TextItemCard.tsx
+// src/components/TextItemCard.tsx - シンプル版（再生ボタンのみ）
 import React from 'react';
 import {
   View,
   Text,
   Pressable,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TextItem } from '../types';
 import { theme } from '../constants/theme';
+import { usePlayerStore } from '../stores/usePlayerStore';
 
 interface TextItemCardProps {
   item: TextItem;
-  onPlay: (item: TextItem) => void;
   onPress: (item: TextItem) => void;
-  isPlaying?: boolean;
 }
 
-const TextItemCard: React.FC<TextItemCardProps> = ({
+const TextItemCard: React.FC<TextItemCardProps> = React.memo(({
   item,
-  onPlay,
   onPress,
-  isPlaying = false,
 }) => {
-  // カード全体のタップハンドラー
-  const handleCardPress = () => {
-    onPlay(item);
+  const {
+    currentItemId,
+    isPlaying,
+    isLoading,
+    play,
+    pause,
+    resume,
+  } = usePlayerStore();
+
+  const isCurrentItem = currentItemId === item.id;
+  const isCurrentlyPlaying = isCurrentItem && isPlaying;
+  const isCurrentlyLoading = isCurrentItem && isLoading;
+
+
+  const handleCardPress = async () => {
+    // カード全体タップで再生/一時停止
+    if (isCurrentlyLoading) {
+      return;
+    }
+
+    if (isCurrentItem) {
+      if (isPlaying) {
+        await pause();
+      } else {
+        await resume();
+      }
+    } else {
+      await play(item.id);
+    }
   };
 
-  // 詳細ボタンのタップハンドラー（バブリング停止）
-  const handleDetailsPress = (event: any) => {
-    event.stopPropagation();
-    onPress(item);
+  // 時間フォーマット関数
+  const formatDuration = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (minutes > 0) {
+      return `${minutes}分${remainingSeconds > 0 ? `${Math.round(remainingSeconds)}秒` : ''}`;
+    }
+    return `${Math.round(remainingSeconds)}秒`;
   };
+
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.container,
-        isPlaying && styles.playing,
+        isCurrentItem && styles.currentItem,
         pressed && styles.pressed,
       ]}
       onPress={handleCardPress}
     >
       <View style={styles.content}>
-        {/* シンプルなタイトル行のみ */}
-        <View style={styles.header}>
+        {/* メイン情報行 */}
+        <View style={styles.mainInfo}>
           <Ionicons
             name={getSourceIcon(item.source)}
-            size={14}
+            size={16}
             color={theme.colors.textSecondary}
             style={styles.sourceIcon}
           />
-          
-          <Text style={styles.title} numberOfLines={1}>
-            {item.title}
-          </Text>
-          
-          {/* 再生中インジケーター */}
-          {isPlaying && (
-            <Ionicons
-              name="volume-medium"
-              size={16}
-              color={theme.colors.playing}
-            />
-          )}
-          
-          {/* 詳細ボタン */}
-          <Pressable
-            style={styles.detailsButton}
-            onPress={handleDetailsPress}
-            hitSlop={8}
-          >
-            <Ionicons
-              name="chevron-forward"
-              size={16}
-              color={theme.colors.textSecondary}
-            />
-          </Pressable>
+
+          <View style={styles.textContainer}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={styles.duration} numberOfLines={1}>
+              {formatDuration(item.duration || 0)}
+            </Text>
+          </View>
+
+
         </View>
+
       </View>
     </Pressable>
   );
-};
+});
 
 // ソースタイプに応じたアイコンを取得
 const getSourceIcon = (source: TextItem['source']): keyof typeof Ionicons.glyphMap => {
@@ -99,24 +114,10 @@ const getSourceIcon = (source: TextItem['source']): keyof typeof Ionicons.glyphM
   }
 };
 
-// 重要度に応じた色を取得
-const getImportanceColor = (importance: number): string => {
-  switch (importance) {
-    case 3:
-      return theme.colors.error;
-    case 2:
-      return theme.colors.warning;
-    default:
-      return theme.colors.textSecondary;
-  }
-};
-
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.m,
-    paddingVertical: theme.spacing.s,
-    paddingHorizontal: theme.spacing.m,
     marginVertical: theme.spacing.xs,
     marginHorizontal: theme.spacing.m,
     shadowColor: '#ffffff',
@@ -124,45 +125,52 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
-    minHeight: 52,
+    overflow: 'hidden',
   },
-  
+
   pressed: {
     opacity: 0.8,
     transform: [{ scale: 0.98 }],
   },
-  
-  playing: {
+
+  currentItem: {
     borderWidth: 1,
-    borderColor: theme.colors.playing,
+    borderColor: theme.colors.primary,
     backgroundColor: theme.colors.surfaceSecondary,
   },
-  
+
   content: {
-    justifyContent: 'center',
+    padding: theme.spacing.m,
   },
-  
-  header: {
+
+  mainInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.s,
   },
-  
+
   sourceIcon: {
-    // アイコンを中央揃えに
+    marginRight: theme.spacing.xs,
   },
-  
+
+  textContainer: {
+    flex: 1,
+  },
+
   title: {
     fontSize: theme.fontSize.m,
     fontWeight: theme.fontWeight.medium,
     color: theme.colors.text,
-    flex: 1,
+    marginBottom: 2,
   },
-  
-  detailsButton: {
-    padding: theme.spacing.xs,
-    marginLeft: theme.spacing.xs,
+
+  duration: {
+    fontSize: theme.fontSize.s,
+    color: theme.colors.textSecondary,
   },
+
+
+
 });
 
 export default TextItemCard;

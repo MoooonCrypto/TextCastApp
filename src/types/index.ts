@@ -25,7 +25,8 @@ export interface TextItem {
 export interface Bookmark {
   id: string;
   position: number;        // 文字位置
-  text: string;           // ブックマーク箇所のテキスト
+  title: string;           // ブックマークのタイトル
+  note?: string;           // メモ内容（オプション）
   createdAt: Date;
 }
 

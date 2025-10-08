@@ -18,7 +18,6 @@ import { router } from 'expo-router';
 // 基本的な設定画面（簡略版）
 export default function SettingsScreen() {
   const [autoBackup, setAutoBackup] = useState(true);
-  const [globalPlayer, setGlobalPlayer] = useState(true);
 
   // テーマ色（ダークテーマベース）
   const theme = {
@@ -117,26 +116,6 @@ export default function SettingsScreen() {
         </View>
 
         <ScrollView style={styles.content}>
-          {/* 再生設定 */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>再生設定</Text>
-            
-            <View style={styles.settingsItem}>
-              <View>
-                <Text style={styles.settingsText}>グローバルプレイヤー</Text>
-                <Text style={styles.settingsSubtitle}>画面下部に常時プレイヤーを表示</Text>
-              </View>
-              <Switch
-                value={globalPlayer}
-                onValueChange={setGlobalPlayer}
-                trackColor={{
-                  false: theme.colors.border,
-                  true: theme.colors.primary + '40'
-                }}
-                thumbColor={globalPlayer ? theme.colors.primary : theme.colors.textTertiary}
-              />
-            </View>
-          </View>
 
           {/* データ・バックアップ */}
           <View style={styles.section}>

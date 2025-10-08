@@ -79,6 +79,7 @@ const AddTextScreen: React.FC<AddTextScreenProps> = ({ navigation }) => {
         isCompleted: false,
         bookmarks: [],
         notes: [],
+        isFavorite: false,
       };
 
       // ここで実際の保存処理を実行（後でStorageServiceに置き換え）
