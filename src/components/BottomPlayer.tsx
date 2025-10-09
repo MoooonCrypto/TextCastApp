@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Dimensions,
+  PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,6 +36,8 @@ const BottomPlayer: React.FC = () => {
   } = usePlayerStore();
 
   const progressRef = useRef<View>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState(0);
   const currentItem = getCurrentItem();
   const styles = createStyles(theme);
 
@@ -42,7 +45,6 @@ const BottomPlayer: React.FC = () => {
     if (isLoading) return;
 
     if (!currentItem) {
-      // 現在のアイテムがない場合は何もしない
       return;
     }
 
@@ -63,6 +65,53 @@ const BottomPlayer: React.FC = () => {
       seek(newPosition);
     });
   };
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponderCapture: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderGrant: () => {
+          console.log('[DRAG] Started');
+          setIsDragging(true);
+        },
+        onPanResponderMove: (evt, gestureState) => {
+          if (!progressRef.current || duration === 0 || !currentItem) return;
+
+          progressRef.current.measure((x, y, width, height, pageX, pageY) => {
+            const touchX = evt.nativeEvent.pageX - pageX;
+            const percentage = Math.max(0, Math.min(1, touchX / width));
+            const newDragPos = percentage * duration;
+            console.log(`[DRAG] Moving to ${newDragPos.toFixed(1)}s (${(percentage * 100).toFixed(1)}%)`);
+            setDragPosition(newDragPos);
+          });
+        },
+        onPanResponderRelease: (evt, gestureState) => {
+          console.log('[DRAG] Released');
+          if (!progressRef.current || duration === 0 || !currentItem) {
+            console.log('[DRAG] Invalid state on release');
+            setIsDragging(false);
+            return;
+          }
+
+          progressRef.current.measure((x, y, width, height, pageX, pageY) => {
+            const touchX = evt.nativeEvent.pageX - pageX;
+            const percentage = Math.max(0, Math.min(1, touchX / width));
+            const newPosition = percentage * duration;
+
+            console.log(`[DRAG] Seeking to ${newPosition.toFixed(1)}s`);
+
+            // ドラッグ状態を解除してからseek
+            setIsDragging(false);
+            seek(newPosition);
+          });
+        },
+      }),
+    [duration, currentItem, seek]
+  );
 
   const handleSpeedPress = async () => {
     if (!currentItem) return;
@@ -90,27 +139,35 @@ const BottomPlayer: React.FC = () => {
     >
       {/* プログレスバー */}
       <View style={styles.progressContainer}>
-        <Pressable
+        <View
           ref={progressRef}
           style={styles.progressBarContainer}
-          onPress={handleProgressPress}
+          {...panResponder.panHandlers}
         >
           <View style={styles.progressBackground} />
           <View
             style={[
               styles.progressFill,
-              { width: `${currentItem ? getProgressPercentage() : 0}%` }
+              {
+                width: isDragging
+                  ? `${(dragPosition / duration) * 100}%`
+                  : `${currentItem ? getProgressPercentage() : 0}%`
+              }
             ]}
           />
           {currentItem && (
             <View
               style={[
                 styles.progressThumb,
-                { left: `${getProgressPercentage()}%` }
+                {
+                  left: isDragging
+                    ? `${(dragPosition / duration) * 100}%`
+                    : `${getProgressPercentage()}%`
+                }
               ]}
             />
           )}
-        </Pressable>
+        </View>
       </View>
 
       {/* メインコンテンツ */}
@@ -140,7 +197,7 @@ const BottomPlayer: React.FC = () => {
           >
             <Ionicons
               name="play-back"
-              size={16}
+              size={14}
               color={currentItem ? theme.colors.text : theme.colors.textTertiary}
             />
             <Text style={[styles.skipText, !currentItem && styles.disabledText]}>10</Text>
@@ -157,7 +214,7 @@ const BottomPlayer: React.FC = () => {
             ) : (
               <Ionicons
                 name={isPlaying ? 'pause' : 'play'}
-                size={24}
+                size={20}
                 color={theme.colors.background}
               />
             )}
@@ -171,7 +228,7 @@ const BottomPlayer: React.FC = () => {
           >
             <Ionicons
               name="play-forward"
-              size={16}
+              size={14}
               color={currentItem ? theme.colors.text : theme.colors.textTertiary}
             />
             <Text style={[styles.skipText, !currentItem && styles.disabledText]}>10</Text>
@@ -199,24 +256,27 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingBottom: 34,
+    paddingBottom: 20,
+    borderTopWidth: 2,
+    borderTopColor: theme.colors.primary,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 24,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 20,
   },
 
   progressContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 8,
-    paddingBottom: 4,
+    paddingBottom: 8,
   },
 
   progressBarContainer: {
-    height: 16,
+    height: 30,
     justifyContent: 'center',
     position: 'relative',
+    paddingVertical: 10,
   },
 
   progressBackground: {
@@ -234,33 +294,33 @@ const createStyles = (theme: Theme) => StyleSheet.create({
 
   progressThumb: {
     position: 'absolute',
-    width: 12,
-    height: 12,
+    width: 14,
+    height: 14,
     backgroundColor: theme.colors.primary,
-    borderRadius: 6,
-    marginLeft: -6,
-    marginTop: -4,
+    borderRadius: 7,
+    marginLeft: -7,
+    marginTop: -5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 4,
+    shadowRadius: 2,
+    elevation: 3,
   },
 
   mainContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
 
   trackInfo: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
 
   title: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 4,
+    marginBottom: 3,
     textAlign: 'center',
   },
 
@@ -271,7 +331,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
 
   timeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
     color: theme.colors.textSecondary,
   },
@@ -280,13 +340,13 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
 
   controlButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.colors.surface,
@@ -295,42 +355,42 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
 
   playButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: theme.colors.primary,
     borderWidth: 0,
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   skipButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     position: 'relative',
   },
 
   skipText: {
     position: 'absolute',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
     color: theme.colors.text,
-    bottom: 2,
+    bottom: 1,
   },
 
   speedButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: theme.colors.surfaceSecondary,
   },
 
   speedText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
     color: theme.colors.text,
   },

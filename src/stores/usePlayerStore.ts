@@ -36,6 +36,7 @@ interface PlayerStore {
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => {
+  let isSeeking = false; // シーク中フラグ
 
   const clearTtsTimer = () => {
     const { ttsProgressTimer } = get();
@@ -129,15 +130,20 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
             startTtsProgressTracking(item.content, playbackRate);
           },
           onDone: () => {
-            console.log('[TTS] Finished speaking');
+            console.log('[TTS] Finished speaking (isSeeking:', isSeeking, ')');
             clearTtsTimer();
-            set({
-              isPlaying: false,
-              currentPosition: get().duration,
-            });
+            // シーク中でない場合のみ位置を更新
+            if (!isSeeking) {
+              set({
+                isPlaying: false,
+                currentPosition: get().duration,
+              });
+            } else {
+              set({ isPlaying: false });
+            }
           },
           onStopped: () => {
-            console.log('[TTS] Stopped speaking');
+            console.log('[TTS] Stopped speaking (isSeeking:', isSeeking, ')');
             clearTtsTimer();
             set({ isPlaying: false });
           },
@@ -168,7 +174,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     pause: async () => {
       console.log('[PLAYER] TTS Pause requested');
       try {
-        Speech.stop();
+        Speech.pause();
         clearTtsTimer();
         set({ isPlaying: false });
       } catch (error) {
@@ -178,11 +184,35 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
     resume: async () => {
       console.log('[PLAYER] TTS Resume requested');
-      const { currentItemId } = get();
+      const { currentItemId, currentText, playbackRate, currentPosition } = get();
 
-      if (currentItemId) {
-        // 現在のアイテムを再度再生
-        await get().play(currentItemId);
+      if (currentItemId && currentText) {
+        try {
+          // resumeを試みる
+          Speech.resume();
+          set({ isPlaying: true });
+
+          // タイマーを再開
+          const duration = get().duration;
+          const timer = setInterval(() => {
+            const { isPlaying, currentPosition, duration } = get();
+            if (isPlaying && currentPosition < duration) {
+              set({ currentPosition: currentPosition + 1 });
+            } else if (currentPosition >= duration) {
+              clearTtsTimer();
+              set({
+                isPlaying: false,
+                currentPosition: duration
+              });
+            }
+          }, 1000);
+
+          set({ ttsProgressTimer: timer });
+        } catch (error) {
+          console.error('[PLAYER] Resume failed, restarting:', error);
+          // resumeが失敗した場合は最初から再生
+          await get().play(currentItemId);
+        }
       }
     },
 
@@ -207,20 +237,86 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
     seek: async (position: number) => {
       console.log(`[PLAYER] TTS Seek requested: ${position}s`);
-      // TTSでは正確なシークが困難なため、簡易実装
-      // 実際のアプリでは、テキストを分割して特定位置から再生する等の実装が必要
-      const { currentItemId, currentText, playbackRate } = get();
+      const { currentItemId, currentText, playbackRate, isPlaying, duration } = get();
 
-      if (currentItemId && currentText) {
-        const duration = estimatePlaybackDuration(currentText, playbackRate);
-        const clampedPosition = Math.max(0, Math.min(position, duration));
+      if (!currentItemId || !currentText) {
+        console.log('[PLAYER] Seek aborted: no current item');
+        return;
+      }
 
-        set({ currentPosition: clampedPosition });
+      const clampedPosition = Math.max(0, Math.min(position, duration));
+      console.log(`[PLAYER] Seek from ${get().currentPosition}s to ${clampedPosition}s (duration: ${duration}s, wasPlaying: ${isPlaying})`);
 
-        // 新しい位置から再生を再開（簡易実装）
-        if (clampedPosition < duration) {
-          await get().play(currentItemId);
-        }
+      const wasPlaying = isPlaying;
+
+      // シーク中フラグを立てる（古いコールバックを無視するため）
+      isSeeking = true;
+
+      // 既存のタイマーを完全にクリア
+      clearTtsTimer();
+
+      // 新しい位置を即座に設定（UIのチラつき防止）
+      set({ currentPosition: clampedPosition, isPlaying: false });
+      console.log(`[PLAYER] Position set to ${clampedPosition}s`);
+
+      // 再生中の場合は停止
+      if (wasPlaying) {
+        Speech.stop();
+        // Speech.stopのコールバック処理を待つ
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      // 再生中だった場合のみ再開
+      if (wasPlaying && clampedPosition < duration) {
+        console.log('[PLAYER] Restarting playback from new position');
+
+        clearTtsTimer();
+
+        Speech.speak(currentText, {
+          language: 'ja-JP',
+          pitch: 1.0,
+          rate: playbackRate,
+          volume: 1.0,
+          onStart: () => {
+            const currentPos = get().currentPosition;
+            console.log(`[TTS] Playback started from ${currentPos}s`);
+            set({ isPlaying: true });
+
+            // 新しいタイマーを作成
+            const timer = setInterval(() => {
+              const state = get();
+              if (state.isPlaying && state.currentPosition < state.duration) {
+                const newPos = state.currentPosition + 1;
+                console.log(`[TIMER] Progress: ${newPos}/${state.duration}s`);
+                set({ currentPosition: newPos });
+              } else if (state.currentPosition >= state.duration) {
+                console.log('[TIMER] Reached end');
+                clearTtsTimer();
+                set({ isPlaying: false, currentPosition: state.duration });
+              }
+            }, 1000);
+            set({ ttsProgressTimer: timer });
+
+            // ここでシーク完了フラグをクリア（onStartが実行された後）
+            setTimeout(() => {
+              isSeeking = false;
+              console.log('[PLAYER] Seek completed, isSeeking set to false');
+            }, 200);
+          },
+          onDone: () => {
+            console.log('[TTS] Done after seek');
+            clearTtsTimer();
+            set({ isPlaying: false });
+          },
+          onStopped: () => {
+            console.log('[TTS] Stopped after seek');
+            clearTtsTimer();
+            set({ isPlaying: false });
+          },
+        });
+      } else {
+        console.log('[PLAYER] Not restarting playback (wasPlaying:', wasPlaying, ')');
+        isSeeking = false;
       }
     },
 

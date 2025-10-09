@@ -244,13 +244,6 @@ function MainHomeScreen() {
           />
         </View>
 
-        {/* 統計情報 */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.statsText}>
-            {filteredItems.length}件のアイテム
-          </Text>
-        </View>
-
         {/* アイテムリスト */}
         <FlatList
           data={filteredItems}
@@ -258,7 +251,7 @@ function MainHomeScreen() {
           keyExtractor={(item) => item.id}
           style={styles.listContainer}
           contentContainerStyle={{
-            paddingBottom: 180 // 新しいボトムプレイヤーの高さを考慮
+            paddingBottom: 160 // グローバルプレイヤー(約150px) + 余白(10px)
           }}
         />
 
@@ -266,7 +259,7 @@ function MainHomeScreen() {
         <TouchableOpacity
           style={[
             styles.fab,
-            { bottom: 180 } // 新しいボトムプレイヤーが常にある前提で配置
+            { bottom: 170 } // グローバルプレイヤー(約150px) + 余白(20px)
           ]}
           onPress={() => setShowAddModal(true)}
           activeOpacity={0.8}
@@ -426,20 +419,6 @@ const createStyles = (theme: Theme) => StyleSheet.create({
 
   categoryTextActive: {
     color: theme.colors.background,
-  },
-
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.m,
-    paddingVertical: theme.spacing.s,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
-  },
-
-  statsText: {
-    fontSize: theme.fontSize.s,
-    color: theme.colors.textSecondary,
   },
 
   listContainer: {
