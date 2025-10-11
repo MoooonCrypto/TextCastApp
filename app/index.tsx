@@ -16,6 +16,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { TextItem } from '../src/types';
 import TextItemCard from '../src/components/TextItemCard';
 import BottomPlayer from '../src/components/BottomPlayer';
@@ -90,6 +91,7 @@ export default function HomeScreen() {
 }
 
 function MainHomeScreen() {
+  const router = useRouter();
   const { theme, themeMode, setThemeMode } = useTheme();
   const { playlist, currentItemId } = usePlayerStore();
 
@@ -201,14 +203,10 @@ function MainHomeScreen() {
         
         {/* ヘッダー */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={handleMenuPress} style={styles.headerButton}>
-              <Ionicons name="menu" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>TextCast</Text>
-          </View>
-          
           <View style={styles.headerRight}>
+            <TouchableOpacity onPress={() => router.push('/edit-playlist')} style={styles.headerButton}>
+              <Ionicons name="create-outline" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
             <TouchableOpacity onPress={handleThemeToggle} style={styles.headerButton}>
               <Ionicons
                 name={themeMode === 'light' ? 'sunny' : 'moon'}
@@ -358,17 +356,12 @@ const createStyles = (theme: Theme) => StyleSheet.create({
 
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.m,
     paddingVertical: theme.spacing.s,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
-  },
-
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
 
   headerRight: {
@@ -382,13 +375,6 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 4,
-  },
-
-  headerTitle: {
-    fontSize: theme.fontSize.l,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text,
-    marginLeft: theme.spacing.s,
   },
 
   categoryContainer: {

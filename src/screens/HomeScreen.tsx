@@ -11,6 +11,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { TextItem } from '../types';
 import { theme, createStyles } from '../constants/theme';
 import TextItemCard from '../components/TextItemCard';
@@ -22,6 +23,7 @@ interface HomeScreenProps {
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  const router = useRouter();
   const { playlist, setPlaylist } = usePlayerStore();
   const { theme: currentTheme, themeMode, setThemeMode } = useTheme();
 
@@ -55,6 +57,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const handleThemeToggle = async () => {
     const nextTheme: 'light' | 'dark' = themeMode === 'dark' ? 'light' : 'dark';
     await setThemeMode(nextTheme);
+  };
+
+  // 編集モードへの遷移
+  const handleEdit = () => {
+    router.push('/edit-playlist');
   };
 
   // リストのレンダリング - シンプル化
@@ -93,6 +100,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: currentTheme.colors.text }]}>TextCast</Text>
         <View style={styles.headerButtons}>
+          {/* 編集ボタン */}
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={handleEdit}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={[styles.editButtonText, { color: currentTheme.colors.primary }]}>
+              編集
+            </Text>
+          </TouchableOpacity>
+
           {/* テーマ切り替えボタン */}
           <TouchableOpacity
             style={styles.themeButton}
@@ -182,6 +200,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.s,
+  },
+
+  editButton: {
+    paddingHorizontal: theme.spacing.s,
+    paddingVertical: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  editButtonText: {
+    fontSize: theme.fontSize.m,
+    fontWeight: theme.fontWeight.semibold,
   },
 
   themeButton: {
