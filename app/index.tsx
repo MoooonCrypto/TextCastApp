@@ -121,11 +121,11 @@ function MainHomeScreen() {
   };
 
   const handleSearchPress = (): void => {
-    console.log('検索画面を開く');
+    router.push('/search');
   };
 
   const handleSettingsPress = (): void => {
-    console.log('設定画面を開く');
+    router.push('/settings');
   };
 
   const handleThemeToggle = (): void => {
@@ -203,16 +203,21 @@ function MainHomeScreen() {
         
         {/* ヘッダー */}
         <View style={styles.header}>
+          {/* 左側: 編集ボタン */}
+          <TouchableOpacity
+            onPress={() => router.push({
+              pathname: '/edit-playlist',
+              params: { category: selectedCategory }
+            })}
+            style={styles.headerButton}
+          >
+            <Ionicons name="create-outline" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+
+          <View style={styles.headerSpacer} />
+
+          {/* 右側: その他のボタン */}
           <View style={styles.headerRight}>
-            <TouchableOpacity
-              onPress={() => router.push({
-                pathname: '/edit-playlist',
-                params: { category: selectedCategory }
-              })}
-              style={styles.headerButton}
-            >
-              <Ionicons name="create-outline" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
             <TouchableOpacity onPress={handleThemeToggle} style={styles.headerButton}>
               <Ionicons
                 name={themeMode === 'light' ? 'sunny' : 'moon'}
@@ -362,12 +367,17 @@ const createStyles = (theme: Theme) => StyleSheet.create({
 
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.m,
-    paddingVertical: theme.spacing.s,
+    paddingVertical: 0,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
+    height: 44,
+  },
+
+  headerSpacer: {
+    flex: 1,
   },
 
   headerRight: {
@@ -376,11 +386,11 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
 
   headerButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: 0,
   },
 
   categoryContainer: {

@@ -62,6 +62,7 @@ function RootLayoutNav() {
             <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
             <Stack.Screen name="add-material" options={{ presentation: 'modal' }} />
             <Stack.Screen name="edit-playlist" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="search" options={{ presentation: 'modal', headerShown: false }} />
           </Stack>
         </NavigationThemeProvider>
       </ThemeProvider>

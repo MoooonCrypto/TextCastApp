@@ -14,7 +14,7 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 
 interface TextItemCardProps {
   item: TextItem;
-  onPress: (item: TextItem) => void;
+  onPress?: (item: TextItem) => void;
 }
 
 const TextItemCard: React.FC<TextItemCardProps> = React.memo(({
@@ -49,6 +49,11 @@ const TextItemCard: React.FC<TextItemCardProps> = React.memo(({
       }
     } else {
       await play(item.id);
+    }
+
+    // onPressが渡されている場合は追加で実行（検索画面用など）
+    if (onPress) {
+      onPress(item);
     }
   };
 

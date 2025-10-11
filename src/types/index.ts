@@ -9,6 +9,7 @@ export interface TextItem {
   fileName?: string;       // ファイル名（ファイルから取得の場合）
   fileType?: string;       // ファイル種別（pdf, docx, etc.）
   category: string;        // 自動分類カテゴリ
+  categoryId?: string;     // カテゴリID（画面遷移用）
   tags: string[];          // タグ（手動・自動）
   importance: 1 | 2 | 3;   // 重要度（1:低 2:中 3:高）
   createdAt: Date;         // 作成日時
