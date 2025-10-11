@@ -9,14 +9,17 @@ import {
   PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../contexts/ThemeContext';
 import { Theme } from '../constants/themes';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-const BottomPlayer: React.FC = () => {
+interface BottomPlayerProps {
+  onExpand?: () => void;
+}
+
+const BottomPlayer: React.FC<BottomPlayerProps> = ({ onExpand }) => {
   const { theme } = useTheme();
   const {
     currentItemId,
@@ -38,8 +41,18 @@ const BottomPlayer: React.FC = () => {
   const progressRef = useRef<View>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState(0);
+  const progressLayoutRef = useRef<{ x: number; y: number; width: number; height: number; pageX: number; pageY: number } | null>(null);
   const currentItem = getCurrentItem();
   const styles = createStyles(theme);
+
+  // プログレスバーのレイアウトを初回測定
+  const measureProgressBar = () => {
+    if (progressRef.current) {
+      progressRef.current.measure((x, y, width, height, pageX, pageY) => {
+        progressLayoutRef.current = { x, y, width, height, pageX, pageY };
+      });
+    }
+  };
 
   const handlePlayPause = async () => {
     if (isLoading) return;
@@ -55,17 +68,6 @@ const BottomPlayer: React.FC = () => {
     }
   };
 
-  const handleProgressPress = (event: any) => {
-    if (!progressRef.current || duration === 0 || !currentItem) return;
-
-    progressRef.current.measure((x, y, width, height, pageX, pageY) => {
-      const touchX = event.nativeEvent.pageX - pageX;
-      const percentage = Math.max(0, Math.min(1, touchX / width));
-      const newPosition = percentage * duration;
-      seek(newPosition);
-    });
-  };
-
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -74,40 +76,37 @@ const BottomPlayer: React.FC = () => {
         onMoveShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponderCapture: () => true,
         onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: () => {
-          console.log('[DRAG] Started');
+        onPanResponderGrant: (evt) => {
+          if (!currentItem || duration === 0) return;
+
+          // ドラッグ開始時にレイアウトを測定
+          measureProgressBar();
           setIsDragging(true);
         },
         onPanResponderMove: (evt, gestureState) => {
-          if (!progressRef.current || duration === 0 || !currentItem) return;
+          if (!progressLayoutRef.current || duration === 0 || !currentItem) return;
 
-          progressRef.current.measure((x, y, width, height, pageX, pageY) => {
-            const touchX = evt.nativeEvent.pageX - pageX;
-            const percentage = Math.max(0, Math.min(1, touchX / width));
-            const newDragPos = percentage * duration;
-            console.log(`[DRAG] Moving to ${newDragPos.toFixed(1)}s (${(percentage * 100).toFixed(1)}%)`);
-            setDragPosition(newDragPos);
-          });
+          const { pageX, width } = progressLayoutRef.current;
+          const touchX = evt.nativeEvent.pageX - pageX;
+          const percentage = Math.max(0, Math.min(1, touchX / width));
+          const newDragPos = percentage * duration;
+
+          setDragPosition(newDragPos);
         },
         onPanResponderRelease: (evt, gestureState) => {
-          console.log('[DRAG] Released');
-          if (!progressRef.current || duration === 0 || !currentItem) {
-            console.log('[DRAG] Invalid state on release');
+          if (!progressLayoutRef.current || duration === 0 || !currentItem) {
             setIsDragging(false);
             return;
           }
 
-          progressRef.current.measure((x, y, width, height, pageX, pageY) => {
-            const touchX = evt.nativeEvent.pageX - pageX;
-            const percentage = Math.max(0, Math.min(1, touchX / width));
-            const newPosition = percentage * duration;
+          const { pageX, width } = progressLayoutRef.current;
+          const touchX = evt.nativeEvent.pageX - pageX;
+          const percentage = Math.max(0, Math.min(1, touchX / width));
+          const newPosition = percentage * duration;
 
-            console.log(`[DRAG] Seeking to ${newPosition.toFixed(1)}s`);
-
-            // ドラッグ状態を解除してからseek
-            setIsDragging(false);
-            seek(newPosition);
-          });
+          // シークしてからドラッグ状態を解除
+          seek(newPosition);
+          setIsDragging(false);
         },
       }),
     [duration, currentItem, seek]
@@ -128,15 +127,8 @@ const BottomPlayer: React.FC = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const gradientColors = theme.colors.background === '#ffffff'
-    ? ['rgba(248,249,250,0.98)', 'rgba(233,236,239,0.95)']
-    : ['rgba(0,0,0,0.95)', 'rgba(0,0,0,0.85)'];
-
   return (
-    <LinearGradient
-      colors={gradientColors}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       {/* プログレスバー */}
       <View style={styles.progressContainer}>
         <View
@@ -172,11 +164,24 @@ const BottomPlayer: React.FC = () => {
 
       {/* メインコンテンツ */}
       <View style={styles.mainContent}>
-        {/* 楽曲情報 */}
-        <View style={styles.trackInfo}>
-          <Text style={styles.title} numberOfLines={1}>
-            {currentItem ? currentItem.title : 'タップして再生'}
-          </Text>
+        {/* 楽曲情報（タップで展開） */}
+        <Pressable
+          style={styles.trackInfo}
+          onPress={onExpand}
+          disabled={!currentItem}
+        >
+          <View style={styles.titleRow}>
+            <Text style={styles.title} numberOfLines={1}>
+              {currentItem ? currentItem.title : 'タップして再生'}
+            </Text>
+            {currentItem && (
+              <Ionicons
+                name="chevron-up"
+                size={20}
+                color="#e9ecef"
+              />
+            )}
+          </View>
           <View style={styles.timeRow}>
             <Text style={styles.timeText}>
               {currentItem ? formatTime(currentPosition) : '--:--'}
@@ -185,7 +190,7 @@ const BottomPlayer: React.FC = () => {
               {currentItem ? formatTime(duration) : '--:--'}
             </Text>
           </View>
-        </View>
+        </Pressable>
 
         {/* コントロールボタン */}
         <View style={styles.controls}>
@@ -198,7 +203,7 @@ const BottomPlayer: React.FC = () => {
             <Ionicons
               name="play-back"
               size={14}
-              color={currentItem ? theme.colors.text : theme.colors.textTertiary}
+              color={currentItem ? '#ffffff' : '#adb5bd'}
             />
             <Text style={[styles.skipText, !currentItem && styles.disabledText]}>10</Text>
           </Pressable>
@@ -210,12 +215,12 @@ const BottomPlayer: React.FC = () => {
             disabled={isLoading || !currentItem}
           >
             {isLoading ? (
-              <ActivityIndicator size="small" color={theme.colors.background} />
+              <ActivityIndicator size="small" color="#ffffff" />
             ) : (
               <Ionicons
                 name={isPlaying ? 'pause' : 'play'}
                 size={20}
-                color={theme.colors.background}
+                color="#ffffff"
               />
             )}
           </Pressable>
@@ -229,7 +234,7 @@ const BottomPlayer: React.FC = () => {
             <Ionicons
               name="play-forward"
               size={14}
-              color={currentItem ? theme.colors.text : theme.colors.textTertiary}
+              color={currentItem ? '#ffffff' : '#adb5bd'}
             />
             <Text style={[styles.skipText, !currentItem && styles.disabledText]}>10</Text>
           </Pressable>
@@ -246,7 +251,7 @@ const BottomPlayer: React.FC = () => {
           </Pressable>
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -256,9 +261,8 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingBottom: 20,
-    borderTopWidth: 2,
-    borderTopColor: theme.colors.primary,
+    paddingBottom: 12,
+    backgroundColor: '#6c757d', // 灰色背景（テーマ切り替え不要）
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.25,
@@ -268,15 +272,15 @@ const createStyles = (theme: Theme) => StyleSheet.create({
 
   progressContainer: {
     paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingTop: 6,
+    paddingBottom: 4,
   },
 
   progressBarContainer: {
-    height: 30,
+    height: 24,
     justifyContent: 'center',
     position: 'relative',
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
 
   progressBackground: {
@@ -309,19 +313,26 @@ const createStyles = (theme: Theme) => StyleSheet.create({
 
   mainContent: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
 
   trackInfo: {
-    marginBottom: 8,
+    marginBottom: 6,
+  },
+
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 2,
   },
 
   title: {
     fontSize: 13,
     fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 3,
-    textAlign: 'center',
+    color: '#ffffff', // 灰色背景に白文字
+    flex: 0,
   },
 
   timeRow: {
@@ -333,34 +344,33 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   timeText: {
     fontSize: 11,
     fontWeight: '500',
-    color: theme.colors.textSecondary,
+    color: '#e9ecef', // 灰色背景に薄い白文字
   },
 
   controls: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
 
   controlButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 0,
   },
 
   playButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: theme.colors.primary,
     borderWidth: 0,
-    shadowColor: theme.colors.primary,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -368,9 +378,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
 
   skipButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     position: 'relative',
   },
 
@@ -378,25 +388,25 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     position: 'absolute',
     fontSize: 9,
     fontWeight: '700',
-    color: theme.colors.text,
+    color: '#ffffff',
     bottom: 1,
   },
 
   speedButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.surfaceSecondary,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
 
   speedText: {
     fontSize: 9,
     fontWeight: '700',
-    color: theme.colors.text,
+    color: '#ffffff',
   },
 
   disabledText: {
-    color: theme.colors.textTertiary,
+    color: '#adb5bd',
   },
 });
 

@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TextItem } from '../src/types';
 import TextItemCard from '../src/components/TextItemCard';
 import BottomPlayer from '../src/components/BottomPlayer';
+import FullScreenPlayer from '../src/components/FullScreenPlayer';
 import { usePlayerStore } from '../src/stores/usePlayerStore';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { Theme } from '../src/constants/themes';
@@ -95,6 +96,7 @@ function MainHomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
+  const [showFullScreenPlayer, setShowFullScreenPlayer] = useState<boolean>(false);
   const [newCategoryName, setNewCategoryName] = useState<string>('');
   const [categories, setCategories] = useState<CategoryItem[]>(CATEGORIES);
 
@@ -251,7 +253,7 @@ function MainHomeScreen() {
           keyExtractor={(item) => item.id}
           style={styles.listContainer}
           contentContainerStyle={{
-            paddingBottom: 160 // グローバルプレイヤー(約150px) + 余白(10px)
+            paddingBottom: 130 // 縮小されたミニプレイヤー + 余白
           }}
         />
 
@@ -259,7 +261,7 @@ function MainHomeScreen() {
         <TouchableOpacity
           style={[
             styles.fab,
-            { bottom: 170 } // グローバルプレイヤー(約150px) + 余白(20px)
+            { bottom: 140 } // 縮小されたミニプレイヤー + 余白
           ]}
           onPress={() => setShowAddModal(true)}
           activeOpacity={0.8}
@@ -331,8 +333,18 @@ function MainHomeScreen() {
           </View>
         </Modal>
 
+        {/* フルスクリーンプレイヤーモーダル */}
+        <Modal
+          visible={showFullScreenPlayer}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowFullScreenPlayer(false)}
+        >
+          <FullScreenPlayer onClose={() => setShowFullScreenPlayer(false)} />
+        </Modal>
+
         {/* 固定ボトムプレイヤー */}
-        <BottomPlayer />
+        <BottomPlayer onExpand={() => setShowFullScreenPlayer(true)} />
       </SafeAreaView>
     </GestureHandlerRootView>
   );

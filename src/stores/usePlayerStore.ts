@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import * as Speech from 'expo-speech';
 import { TextItem } from '../types';
+import { DeviceVoice } from '../types/voice';
 import { mockTextItems } from '../data/mockData';
 
 interface PlayerStore {
@@ -18,6 +19,8 @@ interface PlayerStore {
   currentText: string | null;
   estimatedDuration: number; // 推定時間（秒）
   ttsProgressTimer: NodeJS.Timeout | null;
+  selectedVoice: string | null; // 選択中の音声識別子
+  pitch: number; // ピッチ (0.5 - 2.0)
 
   // アクション
   play: (itemId: string) => Promise<void>;
@@ -29,6 +32,8 @@ interface PlayerStore {
   skipBackward: (seconds?: number) => Promise<void>;
   setPlaylist: (items: TextItem[]) => void;
   setPlaybackRate: (rate: number) => Promise<void>;
+  setVoice: (voiceIdentifier: string) => void;
+  setPitch: (pitch: number) => void;
 
   // ヘルパー
   getCurrentItem: () => TextItem | null;
@@ -93,6 +98,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     currentText: null,
     estimatedDuration: 0,
     ttsProgressTimer: null,
+    selectedVoice: null, // デフォルトはシステム音声
+    pitch: 1.0,
 
     play: async (itemId: string) => {
       console.log(`[PLAYER] TTS Play requested: ${itemId}`);
@@ -111,14 +118,15 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
           return;
         }
 
-        const { playbackRate } = get();
+        const { playbackRate, selectedVoice, pitch } = get();
 
         // TTS設定
         const ttsOptions: Speech.SpeechOptions = {
           language: 'ja-JP',
-          pitch: 1.0,
+          pitch: pitch,
           rate: playbackRate,
           volume: 1.0,
+          ...(selectedVoice && { voice: selectedVoice }), // 音声が選択されている場合のみ指定
           onStart: () => {
             console.log('[TTS] Started speaking');
             set({
@@ -272,17 +280,27 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
         clearTtsTimer();
 
-        Speech.speak(currentText, {
+        // シーク位置に対応するテキスト部分を計算
+        const baseCharactersPerSecond = 8;
+        const adjustedRate = baseCharactersPerSecond * playbackRate;
+        const startCharIndex = Math.floor(clampedPosition * adjustedRate);
+        const textToSpeak = currentText.substring(startCharIndex);
+
+        console.log(`[PLAYER] Speaking from char ${startCharIndex}/${currentText.length} (${textToSpeak.substring(0, 20)}...)`);
+
+        const { selectedVoice, pitch } = get();
+
+        Speech.speak(textToSpeak, {
           language: 'ja-JP',
-          pitch: 1.0,
+          pitch: pitch,
           rate: playbackRate,
           volume: 1.0,
+          ...(selectedVoice && { voice: selectedVoice }),
           onStart: () => {
-            const currentPos = get().currentPosition;
-            console.log(`[TTS] Playback started from ${currentPos}s`);
-            set({ isPlaying: true });
+            console.log(`[TTS] Playback started from ${clampedPosition}s`);
+            set({ isPlaying: true, currentPosition: clampedPosition });
 
-            // 新しいタイマーを作成
+            // 新しいタイマーを作成（シーク位置から開始）
             const timer = setInterval(() => {
               const state = get();
               if (state.isPlaying && state.currentPosition < state.duration) {
@@ -306,12 +324,16 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
           onDone: () => {
             console.log('[TTS] Done after seek');
             clearTtsTimer();
-            set({ isPlaying: false });
+            if (!isSeeking) {
+              set({ isPlaying: false, currentPosition: duration });
+            }
           },
           onStopped: () => {
             console.log('[TTS] Stopped after seek');
             clearTtsTimer();
-            set({ isPlaying: false });
+            if (!isSeeking) {
+              set({ isPlaying: false });
+            }
           },
         });
       } else {
@@ -344,6 +366,17 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       if (isPlaying && currentItemId) {
         await get().play(currentItemId);
       }
+    },
+
+    setVoice: (voiceIdentifier: string) => {
+      console.log(`[PLAYER] Voice changed to: ${voiceIdentifier}`);
+      set({ selectedVoice: voiceIdentifier });
+    },
+
+    setPitch: (pitch: number) => {
+      const clampedPitch = Math.max(0.5, Math.min(2.0, pitch));
+      console.log(`[PLAYER] Pitch changed to: ${clampedPitch}`);
+      set({ pitch: clampedPitch });
     },
 
     getCurrentItem: () => {
