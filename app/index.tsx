@@ -204,7 +204,13 @@ function MainHomeScreen() {
         {/* ヘッダー */}
         <View style={styles.header}>
           <View style={styles.headerRight}>
-            <TouchableOpacity onPress={() => router.push('/edit-playlist')} style={styles.headerButton}>
+            <TouchableOpacity
+              onPress={() => router.push({
+                pathname: '/edit-playlist',
+                params: { category: selectedCategory }
+              })}
+              style={styles.headerButton}
+            >
               <Ionicons name="create-outline" size={24} color={theme.colors.text} />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleThemeToggle} style={styles.headerButton}>

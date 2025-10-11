@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -28,10 +28,21 @@ interface EditPlaylistScreenProps {
 
 const EditPlaylistScreen: React.FC<EditPlaylistScreenProps> = () => {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const selectedCategory = (params.category as string) || 'all';
+
   const { theme, themeMode } = useTheme();
   const { playlist, setPlaylist } = usePlayerStore();
+
+  // カテゴリでフィルタリング
+  const filteredPlaylist = useMemo(() => {
+    return selectedCategory === 'all'
+      ? playlist
+      : playlist.filter(item => item.category === selectedCategory);
+  }, [playlist, selectedCategory]);
+
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [data, setData] = useState<TextItem[]>(playlist);
+  const [data, setData] = useState<TextItem[]>(filteredPlaylist);
 
   const styles = createStyles(theme);
 
@@ -59,8 +70,15 @@ const EditPlaylistScreen: React.FC<EditPlaylistScreenProps> = () => {
 
   // 閉じる
   const handleClose = () => {
-    // 並び順を保存
-    setPlaylist(data);
+    // 並び順を保存（フィルタリングされたカテゴリの場合は、他のカテゴリとマージ）
+    if (selectedCategory === 'all') {
+      setPlaylist(data);
+    } else {
+      // 他のカテゴリのアイテムと、並び替え後のアイテムをマージ
+      const otherItems = playlist.filter(item => item.category !== selectedCategory);
+      const reorderedItems = [...data, ...otherItems];
+      setPlaylist(reorderedItems);
+    }
     router.back();
   };
 
@@ -121,10 +139,12 @@ const EditPlaylistScreen: React.FC<EditPlaylistScreenProps> = () => {
         <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
           <Ionicons name="close" size={28} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>プレイリストを編集</Text>
+        <Text style={styles.headerTitle}>
+          {selectedCategory === 'all' ? 'プレイリストを編集' : `${selectedCategory}を編集`}
+        </Text>
         <TouchableOpacity onPress={toggleSelectAll} style={styles.selectAllButton}>
           <Text style={styles.selectAllText}>
-            {selectedItems.size === playlist.length ? '全解除' : '全選択'}
+            {selectedItems.size === data.length ? '全解除' : '全選択'}
           </Text>
         </TouchableOpacity>
       </View>
