@@ -215,12 +215,12 @@ const BottomPlayer: React.FC<BottomPlayerProps> = ({ onExpand }) => {
             disabled={isLoading || !currentItem}
           >
             {isLoading ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ActivityIndicator size="small" color={theme.colors.background} />
             ) : (
               <Ionicons
                 name={isPlaying ? 'pause' : 'play'}
                 size={20}
-                color="#ffffff"
+                color={theme.colors.background}
               />
             )}
           </Pressable>
