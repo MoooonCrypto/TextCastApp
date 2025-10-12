@@ -1,9 +1,9 @@
-// src/stores/usePlayerStore.ts - Text-to-Speech版
+// src/stores/usePlayerStore.ts - Text-to-Speech版 + DB連携
 import { create } from 'zustand';
 import * as Speech from 'expo-speech';
 import { TextItem } from '../types';
 import { DeviceVoice } from '../types/voice';
-import { mockTextItems } from '../data/mockData';
+import { StorageService } from '../services/StorageService';
 
 interface PlayerStore {
   // 基本状態
@@ -34,6 +34,10 @@ interface PlayerStore {
   setPlaybackRate: (rate: number) => Promise<void>;
   setVoice: (voiceIdentifier: string) => void;
   setPitch: (pitch: number) => void;
+
+  // DB連携
+  loadItemsFromDB: () => Promise<void>;
+  refreshPlaylist: () => Promise<void>;
 
   // ヘルパー
   getCurrentItem: () => TextItem | null;
@@ -88,7 +92,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
   return {
     // 初期状態
-    playlist: mockTextItems,
+    playlist: [], // DBから読み込む
     currentItemId: null,
     isPlaying: false,
     currentPosition: 0,
@@ -377,6 +381,22 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       const clampedPitch = Math.max(0.5, Math.min(2.0, pitch));
       console.log(`[PLAYER] Pitch changed to: ${clampedPitch}`);
       set({ pitch: clampedPitch });
+    },
+
+    // DBからアイテムを読み込む
+    loadItemsFromDB: async () => {
+      try {
+        const items = await StorageService.getItems();
+        set({ playlist: items });
+        console.log(`[PLAYER] Loaded ${items.length} items from DB`);
+      } catch (error) {
+        console.error('[PLAYER] Failed to load items from DB:', error);
+      }
+    },
+
+    // プレイリストを更新（保存後などに呼ぶ）
+    refreshPlaylist: async () => {
+      await get().loadItemsFromDB();
     },
 
     getCurrentItem: () => {

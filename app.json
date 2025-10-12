@@ -13,10 +13,12 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yourname.textcast"
+      "bundleIdentifier": "com.yourname.textcast",
+      "jsEngine": "jsc"
     },
     "android": {
-      "package": "com.yourname.textcast"
+      "package": "com.yourname.textcast",
+      "jsEngine": "jsc"
     },
     "plugins": [
       "expo-router",

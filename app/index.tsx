@@ -43,48 +43,6 @@ const CATEGORIES: CategoryItem[] = [
   { id: '自己啓発', name: '自己啓発', icon: 'bulb-outline' },
 ];
 
-// AddTextScreen コンポーネント
-interface AddTextScreenProps {
-  onClose: () => void;
-}
-
-const AddTextScreen: React.FC<AddTextScreenProps> = ({ onClose }) => {
-  const { theme } = useTheme();
-  const styles = createStyles(theme);
-
-  return (
-    <SafeAreaView style={[styles.addScreenContainer, { backgroundColor: theme.colors.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
-
-      <View style={styles.addScreenHeader}>
-        <TouchableOpacity onPress={onClose}>
-          <Ionicons
-            name="close"
-            size={24}
-            color={theme.colors.text}
-          />
-        </TouchableOpacity>
-        <Text style={styles.addScreenTitle}>新規作成</Text>
-        <TouchableOpacity onPress={onClose}>
-          <Text style={styles.saveButtonText}>保存</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.addScreenContent}>
-        <Text style={styles.inputLabel}>タイトル</Text>
-        <View style={styles.inputContainer}>
-          <Text style={styles.placeholderText}>記事タイトルを入力...</Text>
-        </View>
-
-        <Text style={styles.inputLabel}>本文</Text>
-        <View style={[styles.inputContainer, styles.textAreaContainer]}>
-          <Text style={styles.placeholderText}>本文を入力するか、URLやファイルから読み込み...</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
-
 // メインコンポーネント
 export default function HomeScreen() {
   return <MainHomeScreen />;
@@ -96,11 +54,33 @@ function MainHomeScreen() {
   const { playlist, currentItemId } = usePlayerStore();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
   const [showFullScreenPlayer, setShowFullScreenPlayer] = useState<boolean>(false);
   const [newCategoryName, setNewCategoryName] = useState<string>('');
   const [categories, setCategories] = useState<CategoryItem[]>(CATEGORIES);
+
+  // DB初期化 + データ読み込み（アプリ起動時に1回だけ）
+  React.useEffect(() => {
+    const initDB = async () => {
+      const { StorageService } = await import('../src/services/StorageService');
+      await StorageService.initialize();
+
+      // 開発環境: アイテムがない場合はモックデータをシード
+      if (__DEV__) {
+        const items = await StorageService.getItems();
+        if (items.length === 0) {
+          const { DevTools } = await import('../src/utils/DevTools');
+          await DevTools.seedMockData();
+          console.log('✅ モックデータ追加完了');
+        }
+      }
+
+      // DBからアイテムを読み込む
+      const { loadItemsFromDB } = usePlayerStore.getState();
+      await loadItemsFromDB();
+    };
+    initDB();
+  }, []);
 
   // フィルタリングされたアイテム
   const filteredItems: TextItem[] = playlist.filter(item =>
@@ -272,22 +252,11 @@ function MainHomeScreen() {
             styles.fab,
             { bottom: 140 } // 縮小されたミニプレイヤー + 余白
           ]}
-          onPress={() => setShowAddModal(true)}
+          onPress={() => router.push('/add-material')}
           activeOpacity={0.8}
         >
           <Ionicons name="add" size={28} color={theme.colors.background} />
         </TouchableOpacity>
-
-
-        {/* 新規作成モーダル */}
-        <Modal
-          visible={showAddModal}
-          animationType="slide"
-          presentationStyle="fullScreen"
-          onRequestClose={() => setShowAddModal(false)}
-        >
-          <AddTextScreen onClose={() => setShowAddModal(false)} />
-        </Modal>
 
         {/* カテゴリ追加モーダル */}
         <Modal
@@ -454,64 +423,6 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
-  },
-
-  // AddScreen スタイル
-  addScreenContainer: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-
-  addScreenHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.m,
-    paddingVertical: theme.spacing.s,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
-  },
-
-  addScreenTitle: {
-    fontSize: theme.fontSize.l,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.text,
-  },
-
-  saveButtonText: {
-    fontSize: theme.fontSize.m,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.primary,
-  },
-
-  addScreenContent: {
-    padding: theme.spacing.m,
-  },
-
-  inputLabel: {
-    fontSize: theme.fontSize.s,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.s,
-    marginTop: theme.spacing.l,
-  },
-
-  inputContainer: {
-    padding: theme.spacing.m,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.m,
-    minHeight: 50,
-    justifyContent: 'center',
-  },
-
-  textAreaContainer: {
-    minHeight: 150,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-
-  placeholderText: {
-    color: theme.colors.textTertiary,
-    fontSize: theme.fontSize.m,
   },
 
   // カテゴリ追加ボタン
