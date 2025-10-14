@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as Clipboard from 'expo-clipboard';
 import mammoth from 'mammoth';
 import Papa from 'papaparse';
 import { useTheme } from '../contexts/ThemeContext';
@@ -327,6 +328,30 @@ const AddMaterialScreen: React.FC = () => {
     }
   };
 
+  // クリップボードから貼り付け
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await Clipboard.getStringAsync();
+      if (text) {
+        // 既に内容がある場合は追記するか確認
+        if (content.trim()) {
+          Alert.alert('確認', '現在の内容に追記しますか？', [
+            { text: 'キャンセル', style: 'cancel' },
+            { text: '置き換え', onPress: () => setContent(text) },
+            { text: '追記', onPress: () => setContent(content + '\n\n' + text) },
+          ]);
+        } else {
+          setContent(text);
+        }
+      } else {
+        Alert.alert('エラー', 'クリップボードにテキストがありません');
+      }
+    } catch (error) {
+      console.error('クリップボード読み取りエラー:', error);
+      Alert.alert('エラー', 'クリップボードの読み取りに失敗しました');
+    }
+  };
+
   // 入力方法選択画面に戻る
   const handleBackToSelection = () => {
     if (title.trim() || content.trim() || urlInput.trim()) {
@@ -458,7 +483,17 @@ const AddMaterialScreen: React.FC = () => {
 
         {/* 本文入力 */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>本文（最大100,000文字）</Text>
+          <View style={styles.labelRow}>
+            <Text style={styles.inputLabel}>本文（最大100,000文字）</Text>
+            <TouchableOpacity
+              style={styles.pasteButton}
+              onPress={handlePasteFromClipboard}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="clipboard-outline" size={16} color={theme.colors.primary} />
+              <Text style={styles.pasteButtonText}>貼り付け</Text>
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={[styles.textInput, styles.textArea]}
             value={content}
@@ -630,11 +665,33 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.m,
     },
 
+    labelRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing.s,
+    },
+
     inputLabel: {
       fontSize: theme.fontSize.s,
       fontWeight: theme.fontWeight.medium,
       color: theme.colors.textSecondary,
-      marginBottom: theme.spacing.s,
+    },
+
+    pasteButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.s,
+      paddingVertical: 4,
+      borderRadius: theme.borderRadius.s,
+      backgroundColor: `${theme.colors.primary}15`,
+      gap: 4,
+    },
+
+    pasteButtonText: {
+      fontSize: theme.fontSize.xs,
+      fontWeight: theme.fontWeight.semibold,
+      color: theme.colors.primary,
     },
 
     textInput: {

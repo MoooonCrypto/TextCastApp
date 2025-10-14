@@ -115,7 +115,7 @@ const BottomPlayer: React.FC<BottomPlayerProps> = ({ onExpand }) => {
   const handleSpeedPress = async () => {
     if (!currentItem) return;
 
-    const speeds = [0.5, 1.0, 1.5, 2.0];
+    const speeds = [0.5, 1.0, 1.2, 1.5, 2.0];
     const currentIndex = speeds.indexOf(playbackRate);
     const nextIndex = (currentIndex + 1) % speeds.length;
     await setPlaybackRate(speeds[nextIndex]);

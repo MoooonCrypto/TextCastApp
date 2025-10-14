@@ -375,12 +375,15 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     },
 
     setPlaybackRate: async (rate: number) => {
-      const { isPlaying, currentItemId } = get();
+      const { isPlaying, currentItemId, currentPosition } = get();
+      console.log(`[PLAYER] Playback rate changed from ${get().playbackRate} to ${rate}, currentPosition: ${currentPosition}`);
+
       set({ playbackRate: rate });
 
-      // 再生中の場合は、新しい速度で再開
+      // 再生中の場合は、現在の位置から新しい速度で再開
       if (isPlaying && currentItemId) {
-        await get().play(currentItemId);
+        console.log(`[PLAYER] Seeking to current position ${currentPosition}s with new rate`);
+        await get().seek(currentPosition);
       }
     },
 
