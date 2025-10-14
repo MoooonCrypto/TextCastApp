@@ -59,7 +59,7 @@ function RootLayoutNav() {
           <Stack>
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="settings" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="add-material" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="edit-playlist" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="search" options={{ presentation: 'modal', headerShown: false }} />

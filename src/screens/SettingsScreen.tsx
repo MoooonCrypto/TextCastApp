@@ -101,12 +101,6 @@ const SettingsScreen: React.FC = () => {
             onPress={() => console.log('再生速度設定')}
           />
           <View style={styles.divider} />
-          <MenuItem
-            icon="volume-medium-outline"
-            title="音声設定"
-            onPress={() => console.log('音声設定')}
-          />
-          <View style={styles.divider} />
           <ToggleMenuItem
             icon="play-skip-forward-outline"
             title="自動で次を再生"

@@ -12,9 +12,14 @@ import {
   SafeAreaView,
   StatusBar,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import mammoth from 'mammoth';
+import Papa from 'papaparse';
 import { useTheme } from '../contexts/ThemeContext';
 import { Theme } from '../constants/themes';
 import { StorageService } from '../services/StorageService';
@@ -22,8 +27,9 @@ import { PlanService } from '../services/PlanService';
 import { validateTextItem } from '../utils/validation';
 import { CATEGORIES } from '../types';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { extractTextFromURL, extractTextFromHTML, isValidURL } from '../utils/urlParser';
 
-type InputMethod = 'manual';
+type InputMethod = 'selection' | 'manual' | 'file' | 'url';
 
 const AddMaterialScreen: React.FC = () => {
   const router = useRouter();
@@ -31,10 +37,12 @@ const AddMaterialScreen: React.FC = () => {
   const { refreshPlaylist } = usePlayerStore();
   const styles = createStyles(theme);
 
+  const [inputMethod, setInputMethod] = useState<InputMethod>('selection');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('プログラミング');
   const [isLoading, setIsLoading] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
 
   // カテゴリ一覧（トップ画面と統一）
   const categories = Object.values(CATEGORIES);
@@ -104,13 +112,245 @@ const AddMaterialScreen: React.FC = () => {
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle={themeMode === 'dark' ? 'light-content' : 'dark-content'}
-        backgroundColor={theme.colors.background}
-      />
+  // 入力方法選択ハンドラー
+  const handleSelectInputMethod = async (method: InputMethod) => {
+    setInputMethod(method);
 
+    // 手動入力の場合はそのまま入力画面へ
+    if (method === 'manual') {
+      return;
+    }
+
+    // ファイル選択の場合
+    if (method === 'file') {
+      await handlePickFile();
+      return;
+    }
+
+    // URL入力の場合
+    if (method === 'url') {
+      // URL入力画面に遷移するだけ
+      return;
+    }
+
+    // その他の方法は今後実装
+    Alert.alert('準備中', 'この機能は現在開発中です');
+    setInputMethod('selection');
+  };
+
+  // ファイル選択処理
+  const handlePickFile = async () => {
+    try {
+      setIsLoading(true);
+
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          'text/plain',
+          'text/markdown',
+          'text/html',
+          'text/csv',
+          'text/tab-separated-values',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
+        ],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) {
+        console.log('ファイル選択がキャンセルされました');
+        setInputMethod('selection');
+        return;
+      }
+
+      const file = result.assets[0];
+      console.log('選択されたファイル:', file.name);
+
+      // ファイルサイズチェック (10MB制限)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size && file.size > maxSize) {
+        Alert.alert('エラー', 'ファイルサイズが大きすぎます（最大10MB）');
+        setInputMethod('selection');
+        return;
+      }
+
+      // ファイルを読み込み
+      const response = await fetch(file.uri);
+      const text = await response.text();
+
+      // ファイル拡張子を確認
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      const fileName = file.name.replace(/\.(txt|md|html|htm|docx|csv|tsv)$/i, '');
+
+      // .docxファイルの場合
+      if (fileExtension === 'docx') {
+        try {
+          // Base64で読み込み
+          const base64Content = await FileSystem.readAsStringAsync(file.uri, {
+            encoding: 'base64',
+          });
+
+          // Base64をArrayBufferに変換
+          const binaryString = atob(base64Content);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const arrayBuffer = bytes.buffer;
+
+          // mammothでテキスト抽出
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          const extractedText = result.value.trim();
+
+          if (!extractedText || extractedText.length < 10) {
+            Alert.alert('エラー', 'Word文書からテキストを抽出できませんでした');
+            setInputMethod('selection');
+            return;
+          }
+
+          setTitle(fileName);
+          setContent(extractedText);
+
+          console.log('✅ Word文書読み込み完了:', fileName, extractedText.length, '文字');
+        } catch (error) {
+          console.error('❌ Word文書解析エラー:', error);
+          Alert.alert('エラー', 'Word文書の解析に失敗しました');
+          setInputMethod('selection');
+          return;
+        }
+      }
+      // CSV/TSVファイルの場合
+      else if (fileExtension === 'csv' || fileExtension === 'tsv') {
+        try {
+          const delimiter = fileExtension === 'tsv' ? '\t' : ',';
+
+          // PapaParseでCSV/TSVをパース
+          const parsed = Papa.parse(text, {
+            delimiter,
+            header: true,
+            skipEmptyLines: true,
+          });
+
+          if (parsed.errors.length > 0) {
+            console.warn('CSV/TSVパース警告:', parsed.errors);
+          }
+
+          if (!parsed.data || parsed.data.length === 0) {
+            Alert.alert('エラー', 'CSV/TSVファイルからデータを読み込めませんでした');
+            setInputMethod('selection');
+            return;
+          }
+
+          // データを整形してテキスト化
+          let formattedText = '';
+          parsed.data.forEach((row: any, index: number) => {
+            formattedText += `--- エントリ ${index + 1} ---\n`;
+            Object.entries(row).forEach(([key, value]) => {
+              if (value) {
+                formattedText += `${key}: ${value}\n`;
+              }
+            });
+            formattedText += '\n';
+          });
+
+          setTitle(fileName);
+          setContent(formattedText.trim());
+
+          console.log('✅ CSV/TSV読み込み完了:', fileName, parsed.data.length, '行');
+        } catch (error) {
+          console.error('❌ CSV/TSV解析エラー:', error);
+          Alert.alert('エラー', 'CSV/TSVファイルの解析に失敗しました');
+          setInputMethod('selection');
+          return;
+        }
+      }
+      // HTMLファイルの場合はパース処理
+      else if (fileExtension === 'html' || fileExtension === 'htm') {
+        try {
+          const extracted = extractTextFromHTML(text, fileName);
+          setTitle(extracted.title);
+          setContent(extracted.content);
+        } catch (error) {
+          console.error('❌ HTML解析エラー:', error);
+          Alert.alert('エラー', 'HTMLファイルの解析に失敗しました');
+          setInputMethod('selection');
+          return;
+        }
+      } else {
+        // テキスト/Markdownファイルはそのまま
+        setTitle(fileName);
+        setContent(text);
+      }
+
+      // 手動入力画面に遷移
+      setInputMethod('manual');
+
+      console.log('✅ ファイル読み込み完了:', fileName);
+    } catch (error) {
+      console.error('❌ ファイル選択エラー:', error);
+      Alert.alert('エラー', 'ファイルの読み込みに失敗しました');
+      setInputMethod('selection');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // URL読み込み処理
+  const handleLoadURL = async () => {
+    if (!urlInput.trim()) {
+      Alert.alert('エラー', 'URLを入力してください');
+      return;
+    }
+
+    if (!isValidURL(urlInput)) {
+      Alert.alert('エラー', '有効なURLを入力してください');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const result = await extractTextFromURL(urlInput);
+
+      // タイトルと本文を設定
+      setTitle(result.title);
+      setContent(result.content);
+
+      // 手動入力画面に遷移
+      setInputMethod('manual');
+
+      console.log('✅ URL読み込み完了:', result.title);
+    } catch (error) {
+      console.error('❌ URL読み込みエラー:', error);
+      const errorMessage = error instanceof Error ? error.message : 'URLの読み込みに失敗しました';
+      Alert.alert('エラー', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 入力方法選択画面に戻る
+  const handleBackToSelection = () => {
+    if (title.trim() || content.trim() || urlInput.trim()) {
+      Alert.alert('確認', '入力内容が失われますが、よろしいですか？', [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '破棄',
+          style: 'destructive',
+          onPress: () => {
+            setTitle('');
+            setContent('');
+            setUrlInput('');
+            setInputMethod('selection');
+          },
+        },
+      ]);
+    } else {
+      setInputMethod('selection');
+    }
+  };
+
+  // 入力方法選択画面をレンダリング
+  const renderSelectionScreen = () => (
+    <>
       {/* ヘッダー */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerButton} onPress={handleCancel}>
@@ -118,6 +358,75 @@ const AddMaterialScreen: React.FC = () => {
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>新規作成</Text>
+
+        <View style={styles.headerButton} />
+      </View>
+
+      {/* 入力方法選択ボタン */}
+      <ScrollView style={styles.content} contentContainerStyle={styles.selectionContainer}>
+        <Text style={styles.selectionTitle}>入力方法を選択してください</Text>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('manual')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="create-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>手動入力</Text>
+            <Text style={styles.selectionButtonDescription}>テキストを直接入力</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('file')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="document-text-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>ファイル選択</Text>
+            <Text style={styles.selectionButtonDescription}>
+              .txt, .md, .html, .docx, .csv, .tsv
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('url')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="link-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>URL読み込み</Text>
+            <Text style={styles.selectionButtonDescription}>Webページからテキスト抽出</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+
+      </ScrollView>
+    </>
+  );
+
+  // 手動入力画面をレンダリング
+  const renderManualInputScreen = () => (
+    <>
+      {/* ヘッダー */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.headerButton} onPress={handleBackToSelection}>
+          <Ionicons name="arrow-back" size={28} color={theme.colors.text} />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>手動入力</Text>
 
         <TouchableOpacity
           style={styles.headerButton}
@@ -203,6 +512,74 @@ const AddMaterialScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+    </>
+  );
+
+  // URL入力画面をレンダリング
+  const renderURLInputScreen = () => (
+    <>
+      {/* ヘッダー */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.headerButton} onPress={handleBackToSelection}>
+          <Ionicons name="arrow-back" size={28} color={theme.colors.text} />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>URL読み込み</Text>
+
+        <View style={styles.headerButton} />
+      </View>
+
+      <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>URL</Text>
+          <TextInput
+            style={[styles.textInput, styles.urlInput]}
+            value={urlInput}
+            onChangeText={setUrlInput}
+            placeholder="https://example.com/article"
+            placeholderTextColor={theme.colors.textTertiary}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.loadButton, isLoading && styles.loadButtonDisabled]}
+          onPress={handleLoadURL}
+          disabled={isLoading}
+          activeOpacity={0.7}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color={theme.colors.background} />
+          ) : (
+            <>
+              <Ionicons name="download-outline" size={20} color={theme.colors.background} />
+              <Text style={styles.loadButtonText}>読み込む</Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.infoContainer}>
+          <Ionicons name="information-circle-outline" size={20} color={theme.colors.primary} />
+          <Text style={styles.infoText}>
+            WebページのURLを入力すると、自動的にタイトルと本文を抽出します。
+          </Text>
+        </View>
+      </ScrollView>
+    </>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar
+        barStyle={themeMode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.background}
+      />
+
+      {inputMethod === 'selection' && renderSelectionScreen()}
+      {inputMethod === 'manual' && renderManualInputScreen()}
+      {inputMethod === 'url' && renderURLInputScreen()}
     </SafeAreaView>
   );
 };
@@ -335,6 +712,82 @@ const createStyles = (theme: Theme) =>
     infoText: {
       fontSize: theme.fontSize.s,
       color: theme.colors.textSecondary,
+    },
+
+    // 入力方法選択画面のスタイル
+    selectionContainer: {
+      paddingTop: theme.spacing.xl,
+    },
+
+    selectionTitle: {
+      fontSize: theme.fontSize.xl,
+      fontWeight: theme.fontWeight.semibold,
+      color: theme.colors.text,
+      textAlign: 'center',
+      marginBottom: theme.spacing.xl,
+    },
+
+    selectionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.l,
+      padding: theme.spacing.m,
+      marginBottom: theme.spacing.m,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      minHeight: 72,
+    },
+
+    selectionButtonIcon: {
+      width: 48,
+      height: 48,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: theme.spacing.m,
+    },
+
+    selectionButtonContent: {
+      flex: 1,
+    },
+
+    selectionButtonTitle: {
+      fontSize: theme.fontSize.m,
+      fontWeight: theme.fontWeight.semibold,
+      color: theme.colors.text,
+      marginBottom: 4,
+    },
+
+    selectionButtonDescription: {
+      fontSize: theme.fontSize.s,
+      color: theme.colors.textSecondary,
+    },
+
+    // URL入力画面のスタイル
+    urlInput: {
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    },
+
+    loadButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.m,
+      paddingVertical: theme.spacing.m,
+      marginHorizontal: theme.spacing.m,
+      marginBottom: theme.spacing.m,
+      gap: theme.spacing.s,
+    },
+
+    loadButtonDisabled: {
+      opacity: 0.5,
+    },
+
+    loadButtonText: {
+      fontSize: theme.fontSize.m,
+      fontWeight: theme.fontWeight.semibold,
+      color: theme.colors.background,
     },
   });
 

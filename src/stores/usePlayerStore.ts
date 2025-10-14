@@ -122,7 +122,12 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
           return;
         }
 
-        const { playbackRate, selectedVoice, pitch } = get();
+        // 再生完了しているアイテムを再度再生する場合は位置をリセット
+        const { currentItemId, currentPosition, duration, playbackRate, selectedVoice, pitch } = get();
+        if (currentItemId === itemId && currentPosition >= duration) {
+          console.log('[PLAYER] Resetting position for completed item');
+          set({ currentPosition: 0 });
+        }
 
         // TTS設定
         const ttsOptions: Speech.SpeechOptions = {
@@ -196,16 +201,22 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
     resume: async () => {
       console.log('[PLAYER] TTS Resume requested');
-      const { currentItemId, currentText, playbackRate, currentPosition } = get();
+      const { currentItemId, currentText, playbackRate, currentPosition, duration } = get();
 
       if (currentItemId && currentText) {
+        // 再生完了している場合は最初から再生
+        if (currentPosition >= duration) {
+          console.log('[PLAYER] Already finished, restarting from beginning');
+          await get().play(currentItemId);
+          return;
+        }
+
         try {
           // resumeを試みる
           Speech.resume();
           set({ isPlaying: true });
 
           // タイマーを再開
-          const duration = get().duration;
           const timer = setInterval(() => {
             const { isPlaying, currentPosition, duration } = get();
             if (isPlaying && currentPosition < duration) {

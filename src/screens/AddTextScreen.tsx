@@ -22,7 +22,10 @@ interface AddTextScreenProps {
   navigation: any;
 }
 
+type InputMethod = 'selection' | 'manual' | 'file' | 'url' | 'image' | 'camera' | 'pdf';
+
 const AddTextScreen: React.FC<AddTextScreenProps> = ({ navigation }) => {
+  const [inputMethod, setInputMethod] = useState<InputMethod>('selection');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -121,10 +124,47 @@ const AddTextScreen: React.FC<AddTextScreenProps> = ({ navigation }) => {
     }
   };
 
-  return (
-    <SafeAreaView style={createStyles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
-      
+  // 入力方法選択ハンドラー
+  const handleSelectInputMethod = (method: InputMethod) => {
+    setInputMethod(method);
+
+    // 手動入力の場合はそのまま入力画面へ
+    if (method === 'manual') {
+      // 既存の入力画面を表示
+      return;
+    }
+
+    // その他の方法は今後実装
+    Alert.alert('準備中', 'この機能は現在開発中です');
+    setInputMethod('selection');
+  };
+
+  // 入力方法選択画面に戻る
+  const handleBackToSelection = () => {
+    if (title.length > 0 || content.length > 0) {
+      Alert.alert(
+        '確認',
+        '入力中の内容が失われますが、よろしいですか？',
+        [
+          { text: 'キャンセル', style: 'cancel' },
+          {
+            text: 'OK',
+            onPress: () => {
+              setTitle('');
+              setContent('');
+              setInputMethod('selection');
+            }
+          },
+        ]
+      );
+    } else {
+      setInputMethod('selection');
+    }
+  };
+
+  // 入力方法選択画面をレンダリング
+  const renderSelectionScreen = () => (
+    <>
       {/* ヘッダー */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -134,9 +174,124 @@ const AddTextScreen: React.FC<AddTextScreenProps> = ({ navigation }) => {
         >
           <Ionicons name="close" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        
+
         <Text style={styles.headerTitle}>新規作成</Text>
-        
+
+        <View style={styles.headerButton} />
+      </View>
+
+      {/* 入力方法選択ボタン */}
+      <ScrollView style={styles.container} contentContainerStyle={styles.selectionContainer}>
+        <Text style={styles.selectionTitle}>入力方法を選択してください</Text>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('manual')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="create-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>手動入力</Text>
+            <Text style={styles.selectionButtonDescription}>テキストを直接入力</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('file')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="document-text-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>ファイル選択</Text>
+            <Text style={styles.selectionButtonDescription}>.txt ファイルを読み込み</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('url')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="link-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>URL読み込み</Text>
+            <Text style={styles.selectionButtonDescription}>Webページからテキスト抽出</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('image')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>画像から読取</Text>
+            <Text style={styles.selectionButtonDescription}>ギャラリーから画像を選択</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('camera')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="camera-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>カメラで撮影</Text>
+            <Text style={styles.selectionButtonDescription}>カメラでテキストを撮影</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('pdf')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="document-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>PDF読み込み</Text>
+            <Text style={styles.selectionButtonDescription}>PDFファイルからテキスト抽出</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+      </ScrollView>
+    </>
+  );
+
+  // 手動入力画面をレンダリング
+  const renderManualInputScreen = () => (
+    <>
+      {/* ヘッダー */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={handleBackToSelection}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>手動入力</Text>
+
         <TouchableOpacity
           style={[
             styles.headerButton,
@@ -228,6 +383,15 @@ const AddTextScreen: React.FC<AddTextScreenProps> = ({ navigation }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+    </>
+  );
+
+  return (
+    <SafeAreaView style={createStyles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
+
+      {inputMethod === 'selection' && renderSelectionScreen()}
+      {inputMethod === 'manual' && renderManualInputScreen()}
     </SafeAreaView>
   );
 };
@@ -358,6 +522,55 @@ const styles = StyleSheet.create({
   hintText: {
     ...createStyles.text.caption,
     lineHeight: 18,
+  },
+
+  // 入力方法選択画面のスタイル
+  selectionContainer: {
+    padding: theme.spacing.l,
+    paddingTop: theme.spacing.xl,
+  },
+
+  selectionTitle: {
+    ...createStyles.text.h3,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+    color: theme.colors.text,
+  },
+
+  selectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.l,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    minHeight: 72,
+  },
+
+  selectionButtonIcon: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.m,
+  },
+
+  selectionButtonContent: {
+    flex: 1,
+  },
+
+  selectionButtonTitle: {
+    ...createStyles.text.body,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text,
+    marginBottom: 4,
+  },
+
+  selectionButtonDescription: {
+    ...createStyles.text.caption,
+    color: theme.colors.textSecondary,
   },
 });
 

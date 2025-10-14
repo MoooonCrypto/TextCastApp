@@ -82,6 +82,31 @@ function MainHomeScreen() {
     initDB();
   }, []);
 
+  // プレイリストが更新されたらカテゴリリストも更新
+  React.useEffect(() => {
+    const updateCategories = () => {
+      // プレイリストから一意のカテゴリを抽出
+      const uniqueCategories = Array.from(
+        new Set(playlist.map(item => item.category))
+      ).sort();
+
+      // カテゴリアイテムに変換（デフォルトアイコン使用）
+      const dynamicCategories: CategoryItem[] = uniqueCategories.map(cat => ({
+        id: cat,
+        name: cat,
+        icon: 'folder-outline', // 動的カテゴリはフォルダアイコン
+      }));
+
+      // 「全て」を先頭に追加
+      setCategories([
+        { id: 'all', name: '全て', icon: 'library-outline' },
+        ...dynamicCategories,
+      ]);
+    };
+
+    updateCategories();
+  }, [playlist]);
+
   // フィルタリングされたアイテム
   const filteredItems: TextItem[] = playlist.filter(item =>
     selectedCategory === 'all' || item.category === selectedCategory
