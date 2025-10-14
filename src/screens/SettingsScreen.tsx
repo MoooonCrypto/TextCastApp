@@ -131,12 +131,6 @@ const SettingsScreen: React.FC = () => {
             value={selectedVoice.displayName}
             onPress={() => router.push('/voice-selection')}
           />
-          <View style={styles.divider} />
-          <MenuItem
-            icon="volume-high-outline"
-            title="音声試聴"
-            onPress={() => router.push('/voice-test')}
-          />
         </View>
 
         {/* 有料プラン */}

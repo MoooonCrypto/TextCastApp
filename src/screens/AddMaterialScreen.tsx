@@ -383,6 +383,21 @@ const AddMaterialScreen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.selectionButton}
+          onPress={() => handleSelectInputMethod('url')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.selectionButtonIcon}>
+            <Ionicons name="link-outline" size={32} color={theme.colors.primary} />
+          </View>
+          <View style={styles.selectionButtonContent}>
+            <Text style={styles.selectionButtonTitle}>URL読み込み</Text>
+            <Text style={styles.selectionButtonDescription}>Webページからテキスト抽出</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.selectionButton}
           onPress={() => handleSelectInputMethod('file')}
           activeOpacity={0.7}
         >
@@ -394,21 +409,6 @@ const AddMaterialScreen: React.FC = () => {
             <Text style={styles.selectionButtonDescription}>
               .txt, .md, .html, .docx, .csv, .tsv
             </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.selectionButton}
-          onPress={() => handleSelectInputMethod('url')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.selectionButtonIcon}>
-            <Ionicons name="link-outline" size={32} color={theme.colors.primary} />
-          </View>
-          <View style={styles.selectionButtonContent}>
-            <Text style={styles.selectionButtonTitle}>URL読み込み</Text>
-            <Text style={styles.selectionButtonDescription}>Webページからテキスト抽出</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
         </TouchableOpacity>

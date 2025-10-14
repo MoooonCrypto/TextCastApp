@@ -11,19 +11,14 @@ export interface VoiceOption {
 // デフォルトで全iOSユーザーが使える音声
 export const DEFAULT_VOICES: VoiceOption[] = [
   {
-    identifier: 'com.apple.voice.compact.ja-JP.Kyoko',
-    name: 'Kyoko',
-    displayName: 'Kyoko（女性）',
+    identifier: 'com.apple.ttsbundle.siri_oren_ja-JP_compact',
+    name: 'O-ren',
+    displayName: 'O-ren（女性）',
   },
   {
     identifier: 'com.apple.ttsbundle.siri_hattori_ja-JP_compact',
     name: 'Hattori',
     displayName: 'Hattori（男性）',
-  },
-  {
-    identifier: 'com.apple.ttsbundle.siri_oren_ja-JP_compact',
-    name: 'O-ren',
-    displayName: 'O-ren（女性）',
   },
 ];
 
@@ -37,7 +32,7 @@ interface VoiceStore {
 }
 
 export const useVoiceStore = create<VoiceStore>((set, get) => ({
-  selectedVoice: DEFAULT_VOICES[0], // デフォルトはKyoko
+  selectedVoice: DEFAULT_VOICES[0], // デフォルトはO-ren（女性）
 
   setVoice: async (voice: VoiceOption) => {
     try {
