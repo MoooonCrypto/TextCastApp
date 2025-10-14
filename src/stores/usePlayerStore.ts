@@ -2,8 +2,8 @@
 import { create } from 'zustand';
 import * as Speech from 'expo-speech';
 import { TextItem } from '../types';
-import { DeviceVoice } from '../types/voice';
 import { StorageService } from '../services/StorageService';
+import { useVoiceStore } from './useVoiceStore';
 
 interface PlayerStore {
   // 基本状態
@@ -19,7 +19,6 @@ interface PlayerStore {
   currentText: string | null;
   estimatedDuration: number; // 推定時間（秒）
   ttsProgressTimer: NodeJS.Timeout | null;
-  selectedVoice: string | null; // 選択中の音声識別子
   pitch: number; // ピッチ (0.5 - 2.0)
 
   // アクション
@@ -32,7 +31,6 @@ interface PlayerStore {
   skipBackward: (seconds?: number) => Promise<void>;
   setPlaylist: (items: TextItem[]) => void;
   setPlaybackRate: (rate: number) => Promise<void>;
-  setVoice: (voiceIdentifier: string) => void;
   setPitch: (pitch: number) => void;
 
   // DB連携
@@ -102,7 +100,6 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     currentText: null,
     estimatedDuration: 0,
     ttsProgressTimer: null,
-    selectedVoice: null, // デフォルトはシステム音声
     pitch: 1.0,
 
     play: async (itemId: string) => {
@@ -123,11 +120,14 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         }
 
         // 再生完了しているアイテムを再度再生する場合は位置をリセット
-        const { currentItemId, currentPosition, duration, playbackRate, selectedVoice, pitch } = get();
+        const { currentItemId, currentPosition, duration, playbackRate, pitch } = get();
         if (currentItemId === itemId && currentPosition >= duration) {
           console.log('[PLAYER] Resetting position for completed item');
           set({ currentPosition: 0 });
         }
+
+        // VoiceStoreから選択中の音声を取得
+        const selectedVoice = useVoiceStore.getState().getVoiceIdentifier();
 
         // TTS設定
         const ttsOptions: Speech.SpeechOptions = {
@@ -135,7 +135,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
           pitch: pitch,
           rate: playbackRate,
           volume: 1.0,
-          ...(selectedVoice && { voice: selectedVoice }), // 音声が選択されている場合のみ指定
+          voice: selectedVoice, // VoiceStoreから取得した音声を使用
           onStart: () => {
             console.log('[TTS] Started speaking');
             set({
@@ -303,14 +303,15 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
         console.log(`[PLAYER] Speaking from char ${startCharIndex}/${currentText.length} (${textToSpeak.substring(0, 20)}...)`);
 
-        const { selectedVoice, pitch } = get();
+        const { pitch } = get();
+        const selectedVoice = useVoiceStore.getState().getVoiceIdentifier();
 
         Speech.speak(textToSpeak, {
           language: 'ja-JP',
           pitch: pitch,
           rate: playbackRate,
           volume: 1.0,
-          ...(selectedVoice && { voice: selectedVoice }),
+          voice: selectedVoice,
           onStart: () => {
             console.log(`[TTS] Playback started from ${clampedPosition}s`);
             set({ isPlaying: true, currentPosition: clampedPosition });
@@ -381,11 +382,6 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       if (isPlaying && currentItemId) {
         await get().play(currentItemId);
       }
-    },
-
-    setVoice: (voiceIdentifier: string) => {
-      console.log(`[PLAYER] Voice changed to: ${voiceIdentifier}`);
-      set({ selectedVoice: voiceIdentifier });
     },
 
     setPitch: (pitch: number) => {

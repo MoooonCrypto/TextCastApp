@@ -15,11 +15,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
 import { Theme } from '../constants/themes';
+import { useVoiceStore } from '../stores/useVoiceStore';
 
 const SettingsScreen: React.FC = () => {
   const router = useRouter();
   const { theme, themeMode } = useTheme();
   const styles = createStyles(theme);
+  const { selectedVoice } = useVoiceStore();
 
   // 仮の状態管理
   const [autoPlayNext, setAutoPlayNext] = React.useState(true);
@@ -42,15 +44,19 @@ const SettingsScreen: React.FC = () => {
     title: string;
     onPress: () => void;
     showChevron?: boolean;
-  }> = ({ icon, title, onPress, showChevron = true }) => (
+    value?: string;
+  }> = ({ icon, title, onPress, showChevron = true, value }) => (
     <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.menuItemLeft}>
         <Ionicons name={icon} size={22} color={theme.colors.text} />
         <Text style={styles.menuItemText}>{title}</Text>
       </View>
-      {showChevron && (
-        <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-      )}
+      <View style={styles.menuItemRight}>
+        {value && <Text style={styles.menuItemValue}>{value}</Text>}
+        {showChevron && (
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+        )}
+      </View>
     </TouchableOpacity>
   );
 
@@ -113,6 +119,23 @@ const SettingsScreen: React.FC = () => {
             title="テキスト表示"
             value={showLyrics}
             onValueChange={setShowLyrics}
+          />
+        </View>
+
+        {/* 音声設定 */}
+        <SectionHeader title="音声設定" />
+        <View style={styles.section}>
+          <MenuItem
+            icon="person-outline"
+            title="音声選択"
+            value={selectedVoice.displayName}
+            onPress={() => router.push('/voice-selection')}
+          />
+          <View style={styles.divider} />
+          <MenuItem
+            icon="volume-high-outline"
+            title="音声試聴"
+            onPress={() => router.push('/voice-test')}
           />
         </View>
 
@@ -246,6 +269,17 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     color: theme.colors.text,
     marginLeft: theme.spacing.m,
     fontWeight: theme.fontWeight.medium,
+  },
+
+  menuItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  menuItemValue: {
+    fontSize: theme.fontSize.s,
+    color: theme.colors.textSecondary,
+    marginRight: theme.spacing.s,
   },
 
   divider: {
