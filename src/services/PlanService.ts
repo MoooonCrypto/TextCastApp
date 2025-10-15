@@ -2,6 +2,7 @@
 
 import { UserSettings, PLAN_LIMITS } from '../types';
 import { StorageService } from './StorageService';
+import { AdRewardService } from './AdRewardService';
 
 /**
  * PlanService - プラン制限・広告・リファラル管理
@@ -19,10 +20,13 @@ export class PlanService {
       return Infinity;
     }
 
+    // AdRewardServiceから広告報酬ボーナスを取得
+    const adBonus = await AdRewardService.getAdRewardBonus();
+
     // 無料プラン: 基本 + 広告ボーナス + リファラルボーナス
     return (
       settings.maxFreeItems +
-      settings.bonusItemsFromAds +
+      adBonus +
       settings.bonusItemsFromReferral
     );
   }
@@ -53,7 +57,7 @@ export class PlanService {
   }
 
   /**
-   * 広告視聴処理
+   * 広告視聴処理（AdRewardServiceに委譲）
    */
   static async watchAd(): Promise<{ success: boolean; message: string }> {
     const settings = await StorageService.getSettings();
@@ -66,40 +70,29 @@ export class PlanService {
       return { success: false, message: 'プレミアム会員は広告視聴不要です' };
     }
 
-    // 日付リセットチェック
-    const today = new Date().toDateString();
-    const lastResetDate = settings.lastAdResetDate
-      ? new Date(settings.lastAdResetDate).toDateString()
-      : null;
-
-    let adsWatchedToday = settings.adsWatchedToday;
-
-    if (lastResetDate !== today) {
-      // 日付が変わったのでカウントリセット
-      adsWatchedToday = 0;
-    }
-
-    // 1日の視聴上限チェック
-    if (adsWatchedToday >= PLAN_LIMITS.MAX_ADS_PER_DAY) {
+    // 残り視聴可能回数チェック
+    const remaining = await AdRewardService.getRemainingWatchCount();
+    if (remaining <= 0) {
       return {
         success: false,
-        message: `本日の広告視聴上限（${PLAN_LIMITS.MAX_ADS_PER_DAY}回）に達しています`,
+        message: `本日の広告視聴上限（${AdRewardService.getDailyLimit()}回）に達しています`,
       };
     }
 
-    // 広告視聴成功
-    await StorageService.updateSettings({
-      bonusItemsFromAds: settings.bonusItemsFromAds + PLAN_LIMITS.BONUS_PER_AD,
-      totalAdsWatched: settings.totalAdsWatched + 1,
-      adsWatchedToday: adsWatchedToday + 1,
-      lastAdWatchedAt: new Date(),
-      lastAdResetDate: new Date(),
-    });
+    // AdRewardServiceで広告を表示
+    const result = await AdRewardService.showRewardedAd();
 
-    return {
-      success: true,
-      message: `+${PLAN_LIMITS.BONUS_PER_AD}件 保存枠が増えました！`,
-    };
+    if (result.success) {
+      return {
+        success: true,
+        message: `+${PLAN_LIMITS.BONUS_PER_AD}件 保存枠が増えました！`,
+      };
+    } else {
+      return {
+        success: false,
+        message: result.error || '広告の読み込みに失敗しました',
+      };
+    }
   }
 
   /**

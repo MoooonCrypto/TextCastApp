@@ -57,6 +57,9 @@ function RootLayoutNav() {
   // アプリ起動時に音声設定を読み込み
   useEffect(() => {
     loadVoiceFromStorage();
+
+    // AdMob初期化はExpo Goでは不要（Dev Client/実機ビルド時のみ）
+    // prebuild後やDev Client環境では自動的に初期化される
   }, []);
 
   return (
@@ -72,6 +75,7 @@ function RootLayoutNav() {
             <Stack.Screen name="search" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="voice-selection" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="voice-test" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="ad-reward" options={{ presentation: 'modal', headerShown: false }} />
           </Stack>
         </NavigationThemeProvider>
       </ThemeProvider>

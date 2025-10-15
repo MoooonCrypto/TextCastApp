@@ -133,9 +133,15 @@ const SettingsScreen: React.FC = () => {
           />
         </View>
 
-        {/* 有料プラン */}
-        <SectionHeader title="有料プラン" />
+        {/* ボーナス・有料プラン */}
+        <SectionHeader title="ボーナス・有料プラン" />
         <View style={styles.section}>
+          <MenuItem
+            icon="tv-outline"
+            title="広告を見てボーナスゲット"
+            onPress={() => router.push('/ad-reward')}
+          />
+          <View style={styles.divider} />
           <MenuItem
             icon="diamond-outline"
             title="プレミアムプランに登録"
