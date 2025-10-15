@@ -17,6 +17,7 @@ import { theme, createStyles } from '../constants/theme';
 import TextItemCard from '../components/TextItemCard';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useTheme } from '../contexts/ThemeContext';
+import { BannerAd } from '../components/BannerAd';
 
 interface HomeScreenProps {
   navigation: any; // React Navigation の型定義
@@ -169,7 +170,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         />
       </View>
 
-      {/* フローティングアクションボタン */}
+      {/* バナー広告（グローバルプレイヤーの上） */}
+      <View style={styles.bannerAdContainer}>
+        <BannerAd />
+      </View>
+
+      {/* フローティングアクションボタン（バナー広告の上に表示） */}
       <TouchableOpacity
         style={styles.fab}
         onPress={handleAddNew}
@@ -275,6 +281,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   
+  bannerAdContainer: {
+    position: 'absolute',
+    bottom: 80, // BottomPlayerの高さ（約80px）
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1, // プレイヤーの上、FABの下
+  },
+
   fab: {
     position: 'absolute',
     bottom: 90, // BottomPlayerの高さ（約80px）+ 余裕を持たせる
@@ -290,6 +306,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
+    zIndex: 2, // バナー広告の上に表示
   },
 });
 
