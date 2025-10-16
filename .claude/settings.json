@@ -19,15 +19,18 @@
       "Bash(npm run format:*)",
       "Bash(npm ls:*)",
       "Bash(npx expo start --tunnel)", // tunnel固定
-      "Bash(npx expo prebuild:*)",
-      "Bash(npx expo run:ios)",
-      "Bash(npx expo run:android)",
-      "Bash(npx expo install:*)",     // 新規ライブラリ追加は必ず確認を求める想定
       "Bash(true)"
     ],
     "deny": [
       "Bash(sudo:*)",
       "Bash(git *:*)",
+      "Bash(rm -rf:*)",                // 危険な削除コマンド
+      "Bash(npm install:*)",           // lockfile更新を伴うインストール（npm ci のみ許可）
+      "Bash(npx expo install:*)",      // パッケージ追加（必ず人間に確認）
+      "Bash(npx expo prebuild:*)",     // ネイティブディレクトリ生成（必ず人間に確認）
+      "Bash(npx expo run:*)",          // ネイティブビルド実行（必ず人間に確認）
+      "Bash(eas *:*)",                 // EASコマンド全般（ビルド等、必ず人間に確認）
+      "Bash(npx eas *:*)",             // EASコマンド全般（npx経由も禁止）
       "Read(.env:*)",
       "Read(id_rsa)",
       "Read(id_ed25519)",

@@ -129,13 +129,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         // VoiceStoreから選択中の音声を取得
         const selectedVoice = useVoiceStore.getState().getVoiceIdentifier();
 
-        // TTS設定
+        // TTS設定（音声が利用できない場合はデフォルトを使用）
         const ttsOptions: Speech.SpeechOptions = {
           language: 'ja-JP',
           pitch: pitch,
           rate: playbackRate,
           volume: 1.0,
-          voice: selectedVoice, // VoiceStoreから取得した音声を使用
+          ...(selectedVoice && { voice: selectedVoice }), // 音声が設定されている場合のみ指定
           onStart: () => {
             console.log('[TTS] Started speaking');
             set({
@@ -311,7 +311,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
           pitch: pitch,
           rate: playbackRate,
           volume: 1.0,
-          voice: selectedVoice,
+          ...(selectedVoice && { voice: selectedVoice }), // 音声が設定されている場合のみ指定
           onStart: () => {
             console.log(`[TTS] Playback started from ${clampedPosition}s`);
             set({ isPlaying: true, currentPosition: clampedPosition });

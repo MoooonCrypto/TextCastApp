@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from '@/components/useColorScheme';
 import { ThemeProvider } from '../src/contexts/ThemeContext';
 import { useVoiceStore } from '../src/stores/useVoiceStore';
+import { Audio } from 'expo-av';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -54,12 +55,27 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { loadVoiceFromStorage } = useVoiceStore();
 
-  // アプリ起動時に音声設定を読み込み
+  // アプリ起動時に音声設定を読み込み & オーディオモード設定
   useEffect(() => {
     loadVoiceFromStorage();
 
-    // AdMob初期化はExpo Goでは不要（Dev Client/実機ビルド時のみ）
-    // prebuild後やDev Client環境では自動的に初期化される
+    // バックグラウンドオーディオモードを設定
+    const setupAudioMode = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true, // サイレントモードでも再生
+          staysActiveInBackground: true, // バックグラウンド再生を有効化
+          shouldDuckAndroid: true, // 他のアプリの音量を下げる
+          playThroughEarpieceAndroid: false,
+        });
+        console.log('✅ バックグラウンドオーディオモードを設定しました');
+      } catch (error) {
+        console.error('❌ オーディオモード設定エラー:', error);
+      }
+    };
+
+    setupAudioMode();
   }, []);
 
   return (

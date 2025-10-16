@@ -14,11 +14,20 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.yourname.textcast",
-      "jsEngine": "jsc"
+      "jsEngine": "jsc",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.yourname.textcast",
-      "jsEngine": "jsc"
+      "jsEngine": "jsc",
+      "permissions": [
+        "FOREGROUND_SERVICE"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -34,6 +43,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "eb1fdbc4-f987-4215-913e-3b7f1e18dbcf"
+      }
     }
   }
 }

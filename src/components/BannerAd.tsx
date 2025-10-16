@@ -3,6 +3,11 @@ import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 
 export const BannerAd: React.FC = () => {
+  // Webでは広告を表示しない
+  if (Platform.OS === 'web') {
+    return null;
+  }
+
   // Expo Goでは表示しない
   try {
     // require.resolveで存在確認

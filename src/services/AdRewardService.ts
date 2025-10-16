@@ -1,5 +1,6 @@
 // src/services/AdRewardService.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // 型定義のみインポート（実行時エラーを防ぐ）
 type RewardedAd = any;
@@ -86,6 +87,11 @@ export class AdRewardService {
 
   // リワード広告が利用可能かチェック
   private static isAdMobAvailable(): boolean {
+    // Webでは広告機能は使えない
+    if (Platform.OS === 'web') {
+      return false;
+    }
+
     try {
       // モジュールの存在確認（実際に読み込まない）
       return require.resolve('react-native-google-mobile-ads') !== undefined;
