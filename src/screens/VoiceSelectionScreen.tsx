@@ -85,7 +85,7 @@ const VoiceSelectionScreen: React.FC = () => {
   };
 
   const renderVoiceItem = (voice: VoiceOption) => {
-    const isSelected = selectedVoice.identifier === voice.identifier;
+    const isSelected = selectedVoice?.identifier === voice.identifier;
     const isPlaying = playingVoiceId === voice.identifier;
 
     return (

@@ -18,6 +18,7 @@ import TextItemCard from '../components/TextItemCard';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useTheme } from '../contexts/ThemeContext';
 import { BannerAd } from '../components/BannerAd';
+import { PlanService } from '../services/PlanService';
 
 interface HomeScreenProps {
   navigation: any; // React Navigation の型定義
@@ -29,6 +30,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { theme: currentTheme, themeMode, setThemeMode } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [storageInfo, setStorageInfo] = useState<{
+    current: number;
+    max: number;
+    percentage: number;
+    isPremium: boolean;
+  } | null>(null);
 
   // プレイリストが空の場合は初期化
   useEffect(() => {
@@ -36,6 +43,24 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       setPlaylist([]);
     }
   }, [playlist.length, setPlaylist]);
+
+  // 保存容量情報を読み込み
+  useEffect(() => {
+    const loadStorageInfo = async () => {
+      try {
+        const info = await PlanService.getStorageInfo();
+        setStorageInfo(info);
+      } catch (error) {
+        console.error('[HomeScreen] Failed to load storage info:', error);
+      }
+    };
+
+    loadStorageInfo();
+
+    // プレイリストが変更されたら再読み込み
+    const interval = setInterval(loadStorageInfo, 5000); // 5秒ごとに更新
+    return () => clearInterval(interval);
+  }, [playlist.length]);
 
   // ハンドラーを削除（カード内で処理）
 
@@ -144,12 +169,33 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       <View style={styles.content}>
         {/* 統計情報 */}
         <View style={styles.stats}>
-          <Text style={styles.statsText}>
-            {playlist.length}件のテキスト
-          </Text>
-          <Text style={styles.statsText}>
-            未読: {playlist.filter(item => !item.isCompleted).length}件
-          </Text>
+          <View style={styles.statItem}>
+            <Ionicons name="document-text-outline" size={16} color={currentTheme.colors.textSecondary} />
+            <Text style={[styles.statsText, { color: currentTheme.colors.textSecondary }]}>
+              {playlist.length}件
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Ionicons name="checkmark-circle-outline" size={16} color={currentTheme.colors.textSecondary} />
+            <Text style={[styles.statsText, { color: currentTheme.colors.textSecondary }]}>
+              未読: {playlist.filter(item => !item.isCompleted).length}件
+            </Text>
+          </View>
+          {storageInfo && (
+            <View style={styles.statItem}>
+              <Ionicons
+                name={storageInfo.percentage >= 90 ? "warning-outline" : "folder-outline"}
+                size={16}
+                color={storageInfo.percentage >= 90 ? currentTheme.colors.error : currentTheme.colors.textSecondary}
+              />
+              <Text style={[
+                styles.statsText,
+                { color: storageInfo.percentage >= 90 ? currentTheme.colors.error : currentTheme.colors.textSecondary }
+              ]}>
+                上限: {storageInfo.current}/{storageInfo.max === Infinity ? '∞' : storageInfo.max}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* テキスト一覧 */}
@@ -245,15 +291,23 @@ const styles = StyleSheet.create({
   
   stats: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+    alignItems: 'center',
     paddingHorizontal: theme.spacing.m,
     paddingVertical: theme.spacing.s,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
   },
-  
+
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+
   statsText: {
     ...createStyles.text.caption,
+    fontSize: theme.fontSize.xs,
   },
   
   emptyContainer: {

@@ -25,6 +25,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Theme } from '../constants/themes';
 import { StorageService } from '../services/StorageService';
 import { PlanService } from '../services/PlanService';
+import { AdRewardService } from '../services/AdRewardService';
 import { validateTextItem } from '../utils/validation';
 import { CATEGORIES } from '../types';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -60,7 +61,37 @@ const AddMaterialScreen: React.FC = () => {
     // 容量制限チェック
     const canAdd = await PlanService.canAddNewItem();
     if (!canAdd.canAdd) {
-      Alert.alert('保存上限', canAdd.reason);
+      // 保存上限に達している場合は、広告視聴やプレミアムプランへの誘導
+      const storageInfo = await PlanService.getStorageInfo();
+      const remaining = await AdRewardService.getRemainingWatchCount();
+
+      Alert.alert(
+        '保存上限に達しました',
+        `現在の上限: ${storageInfo.max === Infinity ? '無制限' : storageInfo.max + '件'}\n\n${
+          storageInfo.isPremium
+            ? 'プレミアム会員は無制限に保存できます。'
+            : remaining > 0
+            ? '広告を視聴して保存枠を増やすことができます。'
+            : '明日また広告を視聴するか、プレミアムプランをご検討ください。'
+        }`,
+        storageInfo.isPremium
+          ? [{ text: 'OK' }]
+          : remaining > 0
+          ? [
+              { text: 'キャンセル', style: 'cancel' },
+              {
+                text: '広告を視聴',
+                onPress: () => router.push('/ad-reward'),
+              },
+            ]
+          : [
+              { text: 'キャンセル', style: 'cancel' },
+              {
+                text: 'プレミアムプランを見る',
+                onPress: () => router.push('/settings'),
+              },
+            ]
+      );
       return;
     }
 

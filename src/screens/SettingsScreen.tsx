@@ -128,7 +128,7 @@ const SettingsScreen: React.FC = () => {
           <MenuItem
             icon="person-outline"
             title="音声選択"
-            value={selectedVoice.displayName}
+            value={selectedVoice?.displayName || 'システムデフォルト'}
             onPress={() => router.push('/voice-selection')}
           />
         </View>

@@ -93,8 +93,9 @@ export class AdRewardService {
     }
 
     try {
-      // モジュールの存在確認（実際に読み込まない）
-      return require.resolve('react-native-google-mobile-ads') !== undefined;
+      // モジュールを実際に読み込んで確認
+      const module = require('react-native-google-mobile-ads');
+      return module !== undefined && module.RewardedAd !== undefined;
     } catch {
       return false;
     }
@@ -112,64 +113,61 @@ export class AdRewardService {
     }
 
     try {
-      const { RewardedAd, RewardedAdEventType } = require('react-native-google-mobile-ads');
+      const { RewardedAd, RewardedAdEventType, AdEventType } = require('react-native-google-mobile-ads');
 
       return new Promise((resolve) => {
         const rewarded = RewardedAd.createForAdRequest(this.REWARDED_AD_UNIT_ID, {
           requestNonPersonalizedAdsOnly: false,
         });
 
-      let didReward = false;
+        let didReward = false;
+        let hasResolved = false;
 
-      // 広告の読み込み完了
-      const loadedListener = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
-        console.log('✅ リワード広告読み込み完了');
-        rewarded.show();
-      });
-
-      // 報酬獲得
-      const rewardListener = rewarded.addAdEventListener(
-        RewardedAdEventType.EARNED_REWARD,
-        async (reward) => {
-          console.log('🎁 報酬獲得:', reward);
-          didReward = true;
-          await this.addReward();
-        }
-      );
-
-      // 広告が閉じられた（Androidではこのイベントが発火する）
-      let hasResolved = false;
-
-      const closeHandler = () => {
-        if (!hasResolved) {
-          console.log('📺 広告が閉じられました');
-          hasResolved = true;
+        const cleanup = () => {
           loadedListener();
           rewardListener();
-          resolve({ success: didReward });
-        }
-      };
+          closedListener();
+          errorListener();
+        };
 
-      // 広告読み込みエラー
-      const errorListener = rewarded.addAdEventListener(
-        RewardedAdEventType.ERROR,
-        (error: any) => {
+        const resolveOnce = (result: { success: boolean; error?: string }) => {
           if (!hasResolved) {
-            console.error('❌ 広告エラー:', error);
             hasResolved = true;
-            loadedListener();
-            rewardListener();
-            errorListener();
-            resolve({ success: false, error: error.message || '広告の読み込みに失敗しました' });
+            cleanup();
+            resolve(result);
           }
-        }
-      );
+        };
 
-      // 広告が正常に表示され、ユーザーが操作を完了した後に閉じられる
-      // Androidのみで発火する可能性があるため、タイムアウトも設定
-      setTimeout(() => {
-        closeHandler();
-      }, 60000); // 60秒のタイムアウト
+        // 広告の読み込み完了
+        const loadedListener = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
+          console.log('✅ リワード広告読み込み完了');
+          rewarded.show();
+        });
+
+        // 報酬獲得（視聴完了）
+        const rewardListener = rewarded.addAdEventListener(
+          RewardedAdEventType.EARNED_REWARD,
+          async (reward: any) => {
+            console.log('🎁 報酬獲得:', reward);
+            didReward = true;
+            await this.addReward();
+          }
+        );
+
+        // 広告が閉じられた（AdEventType.CLOSED を使用）
+        const closedListener = rewarded.addAdEventListener(AdEventType.CLOSED, () => {
+          console.log('📺 広告が閉じられました');
+          resolveOnce({ success: didReward });
+        });
+
+        // 広告読み込みエラー（AdEventType.ERROR を使用）
+        const errorListener = rewarded.addAdEventListener(
+          AdEventType.ERROR,
+          (error: any) => {
+            console.error('❌ 広告エラー:', error);
+            resolveOnce({ success: false, error: error.message || '広告の読み込みに失敗しました' });
+          }
+        );
 
         // 読み込み開始
         console.log('📺 リワード広告を読み込み中...');
