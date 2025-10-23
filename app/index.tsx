@@ -21,6 +21,7 @@ import { TextItem } from '../src/types';
 import TextItemCard from '../src/components/TextItemCard';
 import BottomPlayer from '../src/components/BottomPlayer';
 import FullScreenPlayer from '../src/components/FullScreenPlayer';
+import { BannerAd } from '../src/components/BannerAd';
 import { usePlayerStore } from '../src/stores/usePlayerStore';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { Theme } from '../src/constants/themes';
@@ -267,21 +268,9 @@ function MainHomeScreen() {
           keyExtractor={(item) => item.id}
           style={styles.listContainer}
           contentContainerStyle={{
-            paddingBottom: 130 // 縮小されたミニプレイヤー + 余白
+            paddingBottom: 180 // バナー広告(50px) + ミニプレイヤー(80px) + 余白(50px)
           }}
         />
-
-        {/* FAB */}
-        <TouchableOpacity
-          style={[
-            styles.fab,
-            { bottom: 140 } // 縮小されたミニプレイヤー + 余白
-          ]}
-          onPress={() => router.push('/add-material')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="add" size={28} color={theme.colors.background} />
-        </TouchableOpacity>
 
         {/* カテゴリ追加モーダル */}
         <Modal
@@ -345,6 +334,20 @@ function MainHomeScreen() {
         >
           <FullScreenPlayer onClose={() => setShowFullScreenPlayer(false)} />
         </Modal>
+
+        {/* データ追加ボタン（広告の上、右端） */}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => router.push('/add-material')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={28} color={theme.colors.background} />
+        </TouchableOpacity>
+
+        {/* バナー広告（グローバルプレイヤーの上） */}
+        <View style={styles.bannerAdContainer}>
+          <BannerAd />
+        </View>
 
         {/* 固定ボトムプレイヤー */}
         <BottomPlayer onExpand={() => setShowFullScreenPlayer(true)} />
@@ -433,10 +436,20 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     flex: 1,
   },
 
-  fab: {
+  bannerAdContainer: {
     position: 'absolute',
-    bottom: 20,
-    right: theme.spacing.m,
+    bottom: 138, // BottomPlayerの高さ（約90px）+ 余白(48px) = 1cm上
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+
+  addButton: {
+    position: 'absolute',
+    bottom: 198, // バナー広告(50px) + プレイヤー(138px) + 余白(10px)
+    right: 16,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -445,9 +458,10 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 8,
+    zIndex: 2, // 広告より前面に
   },
 
   // カテゴリ追加ボタン
