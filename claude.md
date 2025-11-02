@@ -21,11 +21,23 @@
 
 ## 3. 許可・禁止事項
 - 許可:
-  - bash: mkdir, touch, ls, cat, find, echo
-  - npm: ci, run build, run test, run lint, run format
+  - bash: mkdir, touch, ls, cat, find, echo, mv, cp, tree, grep
+  - npm: ci, run build, run test, run lint, run format, ls
+  - npx: expo start --tunnel（tunnel固定のみ）
+
+- **必ず人間に確認が必要**:
+  - npm install（lockfile更新を伴うインストール）
+  - npx expo install（パッケージ追加・更新）
+  - npx expo prebuild（ネイティブディレクトリ生成）
+  - npx expo run:ios / run:android（ネイティブビルド実行）
+  - eas build（EASビルド実行）
+  - eas submit（App Store / Google Play への提出）
+  - package.json の変更を伴う操作全般
+  - node_modules や重要なディレクトリの削除
+
 - 禁止:
-  - bash: sudo, pkill, rm -rf
-  - **サーバー起動コマンド全般**: npm run dev, npx expo start, expo start 等
+  - bash: sudo, pkill, rm -rf, curl, wget
+  - **サーバー起動コマンド全般**: npm run dev, npx expo start（--tunnel なし）, expo start 等
   - git 操作全般
   - 読み込み禁止: .env, id_rsa, id_ed25519, **/*token*, **/*key*
   - 書き込み禁止: .env, **/secrets/**
