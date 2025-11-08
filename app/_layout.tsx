@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from '@/components/useColorScheme';
 import { ThemeProvider } from '../src/contexts/ThemeContext';
 import { useVoiceStore } from '../src/stores/useVoiceStore';
+import { usePurchaseStore } from '../src/stores/usePurchaseStore';
 import { Audio } from 'expo-av';
 
 export {
@@ -54,10 +55,12 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { loadVoiceFromStorage } = useVoiceStore();
+  const { initialize: initializePurchase } = usePurchaseStore();
 
-  // アプリ起動時に音声設定を読み込み & オーディオモード設定
+  // アプリ起動時に音声設定を読み込み & オーディオモード設定 & 課金初期化
   useEffect(() => {
     loadVoiceFromStorage();
+    initializePurchase(); // 課金システム初期化
 
     // バックグラウンドオーディオモードを設定
     const setupAudioMode = async () => {
@@ -92,6 +95,13 @@ function RootLayoutNav() {
             <Stack.Screen name="voice-selection" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="voice-test" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="ad-reward" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="playback-speed" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="premium-plan" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="faq" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="contact" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="about" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="privacy" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="terms" options={{ presentation: 'modal', headerShown: false }} />
           </Stack>
         </NavigationThemeProvider>
       </ThemeProvider>

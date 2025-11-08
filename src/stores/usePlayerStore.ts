@@ -128,6 +128,33 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
         // VoiceStoreから選択中の音声を取得
         const selectedVoice = useVoiceStore.getState().getVoiceIdentifier();
+        console.log(`[PLAYER] Selected voice from store: ${selectedVoice || 'system default'}`);
+
+        // 選択された音声が利用可能かチェック
+        let voiceToUse: string | undefined = undefined;
+        if (selectedVoice) {
+          try {
+            const availableVoices = await Speech.getAvailableVoicesAsync();
+            console.log(`[PLAYER] Available voices count: ${availableVoices.length}`);
+
+            const matchedVoice = availableVoices.find(
+              (v) => v.identifier === selectedVoice
+            );
+
+            if (matchedVoice) {
+              voiceToUse = selectedVoice;
+              console.log(`[PLAYER] ✅ Using selected voice: ${selectedVoice}`);
+            } else {
+              console.warn(`[PLAYER] ⚠️ Selected voice not available: ${selectedVoice}`);
+              console.warn(`[PLAYER] Available voice identifiers:`, availableVoices.map(v => v.identifier).slice(0, 5));
+              console.warn(`[PLAYER] Using system default instead`);
+            }
+          } catch (error) {
+            console.warn('[PLAYER] Failed to check available voices:', error);
+          }
+        } else {
+          console.log('[PLAYER] No voice selected, using system default');
+        }
 
         // TTS設定（音声が利用できない場合はデフォルトを使用）
         const ttsOptions: Speech.SpeechOptions = {
@@ -135,7 +162,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
           pitch: pitch,
           rate: playbackRate,
           volume: 1.0,
-          ...(selectedVoice && { voice: selectedVoice }), // 音声が設定されている場合のみ指定
+          ...(voiceToUse && { voice: voiceToUse }), // 音声が利用可能な場合のみ指定
           onStart: () => {
             console.log('[TTS] Started speaking');
             set({
@@ -305,13 +332,33 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
         const { pitch } = get();
         const selectedVoice = useVoiceStore.getState().getVoiceIdentifier();
+        console.log(`[PLAYER] (Seek) Selected voice: ${selectedVoice || 'system default'}`);
+
+        // 選択された音声が利用可能かチェック
+        let voiceToUse: string | undefined = undefined;
+        if (selectedVoice) {
+          try {
+            const availableVoices = await Speech.getAvailableVoicesAsync();
+            const matchedVoice = availableVoices.find(
+              (v) => v.identifier === selectedVoice
+            );
+            if (matchedVoice) {
+              voiceToUse = selectedVoice;
+              console.log(`[PLAYER] (Seek) ✅ Using voice: ${selectedVoice}`);
+            } else {
+              console.warn(`[PLAYER] (Seek) ⚠️ Voice not available: ${selectedVoice}`);
+            }
+          } catch (error) {
+            console.warn('[PLAYER] (Seek) Failed to check voices:', error);
+          }
+        }
 
         Speech.speak(textToSpeak, {
           language: 'ja-JP',
           pitch: pitch,
           rate: playbackRate,
           volume: 1.0,
-          ...(selectedVoice && { voice: selectedVoice }), // 音声が設定されている場合のみ指定
+          ...(voiceToUse && { voice: voiceToUse }), // 音声が利用可能な場合のみ指定
           onStart: () => {
             console.log(`[TTS] Playback started from ${clampedPosition}s`);
             set({ isPlaying: true, currentPosition: clampedPosition });

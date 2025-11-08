@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextCast - テキストを音声で聴く</title>
+    <meta name="description" content="TextCastは、テキスト、PDF、ウェブ記事を音声で聴けるポッドキャスト風アプリです。">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        header {
+            text-align: center;
+            color: white;
+            padding: 60px 20px;
+        }
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .tagline {
+            font-size: 24px;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 24px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .content {
+            background: white;
+            border-radius: 16px;
+            padding: 60px;
+            margin-top: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        .feature {
+            text-align: center;
+            padding: 20px;
+        }
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .feature h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        .feature p {
+            color: #666;
+            font-size: 14px;
+        }
+        .links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 50px 0;
+            flex-wrap: wrap;
+        }
+        .link-button {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .link-button:hover {
+            transform: translateY(-2px);
+            background: #764ba2;
+        }
+        .link-button.secondary {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+        .link-button.secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+        footer {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            opacity: 0.8;
+        }
+        footer a {
+            color: white;
+            text-decoration: underline;
+            margin: 0 10px;
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 36px;
+            }
+            .tagline {
+                font-size: 18px;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="app-icon">📻</div>
+            <h1>TextCast</h1>
+            <p class="tagline">テキスト、PDF、記事を音声で聴く</p>
+        </header>
+
+        <div class="content">
+            <h2 style="text-align: center; margin-bottom: 40px; font-size: 32px; color: #333;">
+                音楽アプリのように、コンテンツを聴く
+            </h2>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">📄</div>
+                    <h3>多様な形式に対応</h3>
+                    <p>テキスト、PDF、Word、画像、ウェブ記事など、様々な形式のコンテンツを読み上げ</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎵</div>
+                    <h3>プレイリスト管理</h3>
+                    <p>音楽アプリのように、お気に入りのコンテンツをプレイリストで整理</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3>バックグラウンド再生</h3>
+                    <p>通勤中や散歩中も、スマホをポケットに入れたまま聴ける</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>カスタマイズ可能</h3>
+                    <p>再生速度、音声の種類、ピッチなど、自分好みに調整</p>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 50px; margin-bottom: 20px; font-size: 24px; text-align: center;">
+                プレミアムプラン - ¥480/月
+            </h3>
+            <ul style="max-width: 600px; margin: 0 auto; list-style: none;">
+                <li style="padding: 10px 0; border-bottom: 1px solid #eee;">✨ プレイリスト無制限</li>
+                <li style="padding: 10px 0; border-bottom: 1px solid #eee;">🚫 広告完全非表示</li>
+                <li style="padding: 10px 0; border-bottom: 1px solid #eee;">📁 ファイル処理無制限</li>
+                <li style="padding: 10px 0; border-bottom: 1px solid #eee;">☁️ クラウド無制限バックアップ</li>
+                <li style="padding: 10px 0;">🎛️ 高度な音声設定</li>
+            </ul>
+
+            <div class="links">
+                <a href="privacy.html" class="link-button">プライバシーポリシー</a>
+                <a href="terms.html" class="link-button">利用規約</a>
+                <a href="mailto:textcastapps@gmail.com" class="link-button secondary">お問い合わせ</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2025 TextCast. All rights reserved.</p>
+            <p>
+                <a href="privacy.html">プライバシーポリシー</a>
+                |
+                <a href="terms.html">利用規約</a>
+                |
+                <a href="mailto:textcastapps@gmail.com">お問い合わせ</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

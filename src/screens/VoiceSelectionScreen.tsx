@@ -1,5 +1,5 @@
 // src/screens/VoiceSelectionScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,34 @@ const VoiceSelectionScreen: React.FC = () => {
 
   const { selectedVoice, setVoice } = useVoiceStore();
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 利用可能な音声を取得
+  useEffect(() => {
+    const loadAvailableVoices = async () => {
+      try {
+        const allVoices = await Speech.getAvailableVoicesAsync();
+        const voiceIdentifiers = allVoices.map((v) => v.identifier);
+
+        // DEFAULT_VOICESの中から利用可能なもののみをフィルタ
+        const available = DEFAULT_VOICES.filter((voice) =>
+          voiceIdentifiers.includes(voice.identifier)
+        );
+
+        setAvailableVoices(available);
+        console.log(`[VoiceSelection] Found ${available.length} available voices`);
+      } catch (error) {
+        console.error('[VoiceSelection] Failed to load voices:', error);
+        // エラー時は全て表示
+        setAvailableVoices(DEFAULT_VOICES);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAvailableVoices();
+  }, []);
 
   // 試し聞き用の短い例文
   const sampleText = `こんにちは。この音声でテキストを読み上げます。`;
@@ -44,18 +72,32 @@ const VoiceSelectionScreen: React.FC = () => {
 
       setPlayingVoiceId(voice.identifier);
 
-      await Speech.speak(sampleText, {
+      // タイムアウト処理を追加（10秒でタイムアウト）
+      const timeoutId = setTimeout(() => {
+        console.warn('[VoiceSelection] Speech timeout, stopping...');
+        Speech.stop();
+        setPlayingVoiceId(null);
+      }, 10000);
+
+      Speech.speak(sampleText, {
         language: 'ja-JP',
         voice: voice.identifier,
         pitch: 1.0,
         rate: 1.0,
+        onStart: () => {
+          console.log(`[VoiceSelection] Started playing: ${voice.displayName}`);
+        },
         onDone: () => {
+          clearTimeout(timeoutId);
           setPlayingVoiceId(null);
         },
         onStopped: () => {
+          clearTimeout(timeoutId);
           setPlayingVoiceId(null);
         },
-        onError: () => {
+        onError: (error) => {
+          console.error('[VoiceSelection] Speech error:', error);
+          clearTimeout(timeoutId);
           setPlayingVoiceId(null);
         },
       });
@@ -150,9 +192,24 @@ const VoiceSelectionScreen: React.FC = () => {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.section}>
-          {DEFAULT_VOICES.map(renderVoiceItem)}
-        </View>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={styles.loadingText}>音声を読み込み中...</Text>
+          </View>
+        ) : availableVoices.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="volume-mute-outline" size={48} color={theme.colors.textSecondary} />
+            <Text style={styles.emptyText}>
+              利用可能な音声が見つかりませんでした。{'\n'}
+              システムデフォルトの音声を使用します。
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.section}>
+            {availableVoices.map(renderVoiceItem)}
+          </View>
+        )}
 
         {/* サンプルテキスト表示 */}
         <View style={styles.sampleTextContainer}>
@@ -308,6 +365,35 @@ const createStyles = (theme: Theme) =>
       fontSize: theme.fontSize.m,
       color: theme.colors.text,
       lineHeight: 24,
+    },
+
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.xxl,
+    },
+
+    loadingText: {
+      marginTop: theme.spacing.m,
+      fontSize: theme.fontSize.m,
+      color: theme.colors.textSecondary,
+    },
+
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.xxl,
+      paddingHorizontal: theme.spacing.xl,
+    },
+
+    emptyText: {
+      marginTop: theme.spacing.m,
+      fontSize: theme.fontSize.m,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 22,
     },
   });
 

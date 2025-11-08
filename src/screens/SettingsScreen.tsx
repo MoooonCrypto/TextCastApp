@@ -10,25 +10,103 @@ import {
   SafeAreaView,
   StatusBar,
   Switch,
+  Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
-import { Theme } from '../constants/themes';
+import { Theme, ThemeMode } from '../constants/themes';
 import { useVoiceStore } from '../stores/useVoiceStore';
+import { usePurchaseStore } from '../stores/usePurchaseStore';
+import { showComingSoonAlert } from '../utils/alerts';
 
 const SettingsScreen: React.FC = () => {
   const router = useRouter();
-  const { theme, themeMode } = useTheme();
+  const { theme, themeMode, setThemeMode } = useTheme();
   const styles = createStyles(theme);
   const { selectedVoice } = useVoiceStore();
+  const { setMockPremium } = usePurchaseStore();
 
   // 仮の状態管理
   const [autoPlayNext, setAutoPlayNext] = React.useState(true);
   const [showLyrics, setShowLyrics] = React.useState(false);
 
+  // テーマ設定の表示名取得
+  const getThemeDisplayName = (mode: ThemeMode): string => {
+    switch (mode) {
+      case 'light':
+        return 'ライト';
+      case 'dark':
+        return 'ダーク';
+      case 'system':
+        return 'システム設定に従う';
+    }
+  };
+
+  // テーマ選択アラート
+  const handleThemeSelection = () => {
+    Alert.alert(
+      'テーマ設定',
+      'テーマを選択してください',
+      [
+        {
+          text: 'ライト',
+          onPress: () => setThemeMode('light'),
+        },
+        {
+          text: 'ダーク',
+          onPress: () => setThemeMode('dark'),
+        },
+        {
+          text: 'システム設定に従う',
+          onPress: () => setThemeMode('system'),
+        },
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true } // アラート外タップでキャンセル可能
+    );
+  };
+
   const handleClose = () => {
     router.back();
+  };
+
+  // SNS・外部リンクを開く
+  const handleOpenLink = async (url: string, name: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('エラー', `${name}を開くことができませんでした。`);
+      }
+    } catch (error) {
+      console.error('[Settings] Failed to open link:', error);
+      Alert.alert('エラー', 'リンクを開く際にエラーが発生しました。');
+    }
+  };
+
+  // デバッグ用: プレミアム状態をリセット
+  const handleResetPremium = async () => {
+    Alert.alert(
+      'プレミアム状態をリセット',
+      'デバッグ用のプレミアム状態をリセットしますか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: 'リセット',
+          style: 'destructive',
+          onPress: async () => {
+            await setMockPremium(false);
+            Alert.alert('完了', 'プレミアム状態をリセットしました');
+          },
+        },
+      ]
+    );
   };
 
   // セクションヘッダー
@@ -75,8 +153,13 @@ const SettingsScreen: React.FC = () => {
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-        thumbColor={theme.colors.background}
+        trackColor={{
+          false: '#E5E5EA', // オフ時の余白色（灰色）
+          true: '#34C759'   // オン時の余白色（iPhoneの緑）
+        }}
+        thumbColor="#FFFFFF" // ボタン自体は常に白色
+        ios_backgroundColor="#E5E5EA" // iOS用のオフ時背景色
+        style={{ transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }] }}
       />
     </View>
   );
@@ -98,30 +181,6 @@ const SettingsScreen: React.FC = () => {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* 基本設定 */}
-        <SectionHeader title="基本設定" />
-        <View style={styles.section}>
-          <MenuItem
-            icon="speedometer-outline"
-            title="再生速度"
-            onPress={() => console.log('再生速度設定')}
-          />
-          <View style={styles.divider} />
-          <ToggleMenuItem
-            icon="play-skip-forward-outline"
-            title="自動で次を再生"
-            value={autoPlayNext}
-            onValueChange={setAutoPlayNext}
-          />
-          <View style={styles.divider} />
-          <ToggleMenuItem
-            icon="text-outline"
-            title="テキスト表示"
-            value={showLyrics}
-            onValueChange={setShowLyrics}
-          />
-        </View>
-
         {/* 音声設定 */}
         <SectionHeader title="音声設定" />
         <View style={styles.section}>
@@ -130,6 +189,34 @@ const SettingsScreen: React.FC = () => {
             title="音声選択"
             value={selectedVoice?.displayName || 'システムデフォルト'}
             onPress={() => router.push('/voice-selection')}
+          />
+        </View>
+
+        {/* 再生設定 */}
+        <SectionHeader title="再生設定" />
+        <View style={styles.section}>
+          <MenuItem
+            icon="speedometer-outline"
+            title="再生速度"
+            onPress={() => router.push('/playback-speed')}
+          />
+          <View style={styles.divider} />
+          <ToggleMenuItem
+            icon="play-skip-forward-outline"
+            title="自動で次を再生"
+            value={autoPlayNext}
+            onValueChange={setAutoPlayNext}
+          />
+        </View>
+
+        {/* 表示設定 */}
+        <SectionHeader title="表示設定" />
+        <View style={styles.section}>
+          <MenuItem
+            icon="color-palette-outline"
+            title="テーマ"
+            value={getThemeDisplayName(themeMode)}
+            onPress={handleThemeSelection}
           />
         </View>
 
@@ -145,35 +232,78 @@ const SettingsScreen: React.FC = () => {
           <MenuItem
             icon="diamond-outline"
             title="プレミアムプランに登録"
-            onPress={() => console.log('プレミアムプラン')}
+            onPress={() => router.push('/premium-plan')}
           />
         </View>
 
-        {/* その他 */}
-        <SectionHeader title="その他" />
+        {/* ヘルプ・サポート */}
+        <SectionHeader title="ヘルプ・サポート" />
+        <View style={styles.section}>
+          <MenuItem
+            icon="help-circle-outline"
+            title="よくある質問（FAQ）"
+            onPress={() => router.push('/faq')}
+          />
+          <View style={styles.divider} />
+          <MenuItem
+            icon="mail-outline"
+            title="お問い合わせ"
+            onPress={() => router.push('/contact')}
+          />
+        </View>
+
+        {/* メディア */}
+        <SectionHeader title="メディア" />
+        <View style={styles.section}>
+          <MenuItem
+            icon="logo-twitter"
+            title="X"
+            onPress={() => handleOpenLink('https://x.com/textcast_app', 'X')}
+          />
+          <View style={styles.divider} />
+          <MenuItem
+            icon="logo-youtube"
+            title="YouTube"
+            onPress={() => handleOpenLink('https://youtube.com/@textcast', 'YouTube')}
+          />
+          <View style={styles.divider} />
+          <MenuItem
+            icon="person-outline"
+            title="開発者について"
+            onPress={() => handleOpenLink('https://github.com/textcast', '開発者について')}
+          />
+        </View>
+
+        {/* アプリ情報 */}
+        <SectionHeader title="アプリ情報" />
         <View style={styles.section}>
           <MenuItem
             icon="information-circle-outline"
             title="アプリについて"
-            onPress={() => console.log('アプリについて')}
-          />
-          <View style={styles.divider} />
-          <MenuItem
-            icon="help-circle-outline"
-            title="ヘルプ・サポート"
-            onPress={() => console.log('ヘルプ')}
+            onPress={() => router.push('/about')}
           />
           <View style={styles.divider} />
           <MenuItem
             icon="shield-checkmark-outline"
             title="プライバシーポリシー"
-            onPress={() => console.log('プライバシーポリシー')}
+            onPress={() => router.push('/privacy')}
           />
           <View style={styles.divider} />
           <MenuItem
             icon="document-text-outline"
             title="利用規約"
-            onPress={() => console.log('利用規約')}
+            onPress={() => router.push('/terms')}
+          />
+        </View>
+
+        {/* デバッグ（開発中のみ） */}
+        <SectionHeader title="デバッグ" />
+        <View style={styles.section}>
+          <MenuItem
+            icon="bug-outline"
+            title="プレミアム状態をリセット"
+            onPress={handleResetPremium}
+            showChevron={false}
           />
         </View>
 
