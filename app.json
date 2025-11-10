@@ -14,6 +14,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.textcastapp.ios",
+      "buildNumber": "2",
       "jsEngine": "jsc",
       "infoPlist": {
         "UIBackgroundModes": [
