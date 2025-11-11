@@ -14,6 +14,8 @@ import { ThemeProvider } from '../src/contexts/ThemeContext';
 import { useVoiceStore } from '../src/stores/useVoiceStore';
 import { usePurchaseStore } from '../src/stores/usePurchaseStore';
 import { Audio } from 'expo-av';
+import TrackPlayer from 'react-native-track-player';
+import { PlaybackService } from '../src/services/PlaybackService';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -57,10 +59,46 @@ function RootLayoutNav() {
   const { loadVoiceFromStorage } = useVoiceStore();
   const { initialize: initializePurchase } = usePurchaseStore();
 
-  // アプリ起動時に音声設定を読み込み & オーディオモード設定 & 課金初期化
+  // アプリ起動時に音声設定を読み込み & オーディオモード設定 & 課金初期化 & TrackPlayer初期化
   useEffect(() => {
     loadVoiceFromStorage();
     initializePurchase(); // 課金システム初期化
+
+    // TrackPlayerの初期化
+    const setupTrackPlayer = async () => {
+      try {
+        await TrackPlayer.setupPlayer({
+          autoUpdateMetadata: true,
+          autoHandleInterruptions: true,
+        });
+
+        await TrackPlayer.updateOptions({
+          capabilities: [
+            TrackPlayer.CAPABILITY_PLAY,
+            TrackPlayer.CAPABILITY_PAUSE,
+            TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
+            TrackPlayer.CAPABILITY_SKIP_TO_PREVIOUS,
+            TrackPlayer.CAPABILITY_SEEK_TO,
+            TrackPlayer.CAPABILITY_STOP,
+          ],
+          compactCapabilities: [
+            TrackPlayer.CAPABILITY_PLAY,
+            TrackPlayer.CAPABILITY_PAUSE,
+            TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
+          ],
+          notificationCapabilities: [
+            TrackPlayer.CAPABILITY_PLAY,
+            TrackPlayer.CAPABILITY_PAUSE,
+            TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
+            TrackPlayer.CAPABILITY_SKIP_TO_PREVIOUS,
+          ],
+        });
+
+        console.log('✅ TrackPlayer初期化完了');
+      } catch (error) {
+        console.error('❌ TrackPlayer初期化エラー:', error);
+      }
+    };
 
     // バックグラウンドオーディオモードを設定
     const setupAudioMode = async () => {
@@ -78,6 +116,7 @@ function RootLayoutNav() {
       }
     };
 
+    setupTrackPlayer();
     setupAudioMode();
   }, []);
 
