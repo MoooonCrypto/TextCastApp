@@ -1619,9 +1619,6 @@ PODS:
     - Yoga
   - react-native-text-recognition (1.0.2):
     - React-Core
-  - react-native-track-player (4.1.2):
-    - React-Core
-    - SwiftAudioEx (= 1.1.0)
   - React-NativeModulesApple (0.81.4):
     - hermes-engine
     - React-callinvoker
@@ -2281,9 +2278,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - SwiftAudioEx (1.1.0)
-  - TextToSpeech (4.1.1):
-    - React-Core
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2291,7 +2285,7 @@ DEPENDENCIES:
   - "EXConstants (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-constants/ios 2`)"
   - "EXImageLoader (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-image-loader/ios`)"
   - "EXJSONUtils (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-json-utils/ios`)"
-  - "EXManifests (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-manifests/ios`)"
+  - "EXManifests (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-manifests/ios 2`)"
   - "Expo (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo`)"
   - "expo-dev-client (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-client/ios`)"
   - "expo-dev-launcher (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-launcher`)"
@@ -2308,7 +2302,7 @@ DEPENDENCIES:
   - "ExpoLinearGradient (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linear-gradient/ios`)"
   - "ExpoLinking (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linking/ios 2`)"
   - "ExpoModulesCore (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-modules-core`)"
-  - "ExpoSpeech (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-speech/ios 2`)"
+  - "ExpoSpeech (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-speech/ios`)"
   - "ExpoSplashScreen (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-splash-screen/ios`)"
   - "ExpoSystemUI (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-system-ui/ios`)"
   - "ExpoWebBrowser (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-web-browser/ios 2`)"
@@ -2351,7 +2345,6 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-text-recognition (from `../node_modules/react-native-text-recognition`)
-  - react-native-track-player (from `../node_modules/react-native-track-player`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -2391,7 +2384,6 @@ DEPENDENCIES:
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
-  - TextToSpeech (from `../node_modules/react-native-tts`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -2400,7 +2392,6 @@ SPEC REPOS:
     - GoogleUserMessagingPlatform
     - PurchasesHybridCommon
     - RevenueCat
-    - SwiftAudioEx
 
 EXTERNAL SOURCES:
   EXAV:
@@ -2412,7 +2403,7 @@ EXTERNAL SOURCES:
   EXJSONUtils:
     :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-json-utils/ios"
   EXManifests:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-manifests/ios"
+    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-manifests/ios 2"
   Expo:
     :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo"
   expo-dev-client:
@@ -2446,7 +2437,7 @@ EXTERNAL SOURCES:
   ExpoModulesCore:
     :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-modules-core"
   ExpoSpeech:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-speech/ios 2"
+    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-speech/ios"
   ExpoSplashScreen:
     :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-splash-screen/ios"
   ExpoSystemUI:
@@ -2530,8 +2521,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-text-recognition:
     :path: "../node_modules/react-native-text-recognition"
-  react-native-track-player:
-    :path: "../node_modules/react-native-track-player"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-oscompat:
@@ -2610,8 +2599,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-svg"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
-  TextToSpeech:
-    :path: "../node_modules/react-native-tts"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -2682,7 +2669,6 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 76905804171d8ccbe69329fc84c57eb7934add7f
   react-native-safe-area-context: 42a1b4f8774b577d03b53de7326e3d5757fe9513
   react-native-text-recognition: 2f93fddd03668fc4011dfdb1895324c710a026ca
-  react-native-track-player: dd56f9948e03756a217c75e0a61aa04aab65b5a1
   React-NativeModulesApple: a9464983ccc0f66f45e93558671f60fc7536e438
   React-oscompat: 73db7dbc80edef36a9d6ed3c6c4e1724ead4236d
   React-perflogger: 123272debf907cc423962adafcf4513320e43757
@@ -2723,8 +2709,6 @@ SPEC CHECKSUMS:
   RNScreens: d8d6f1792f6e7ac12b0190d33d8d390efc0c1845
   RNSVG: 31d6639663c249b7d5abc9728dde2041eb2a3c34
   RNWorklets: e364508cac14fe96550190c5794bfcc21287cd04
-  SwiftAudioEx: f6aa653770f3a0d3851edaf8d834a30aee4a7646
-  TextToSpeech: 89b239221ec378d213af422d14789a729705360b
   Yoga: 051f086b5ccf465ff2ed38a2cf5a558ae01aaaa1
 
 PODFILE CHECKSUM: 6eb8581b99d75d3ace37a86d2ab2abb3ae09b07b

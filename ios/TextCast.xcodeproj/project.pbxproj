@@ -22,7 +22,7 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = TextCast/Info.plist; sourceTree = "<group>"; };
 		3428F84CB684F378D337488A /* Pods-TextCast.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TextCast.debug.xcconfig"; path = "Target Support Files/Pods-TextCast/Pods-TextCast.debug.xcconfig"; sourceTree = "<group>"; };
 		7DCC8C8A9A404E07C9AAF346 /* Pods-TextCast.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TextCast.release.xcconfig"; path = "Target Support Files/Pods-TextCast/Pods-TextCast.release.xcconfig"; sourceTree = "<group>"; };
-		8BBD3D40569F2C3E1D5C172B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = TextCast/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		8BBD3D40569F2C3E1D5C172B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = TextCast/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = TextCast/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		C5699931DE76E1A46E1AD390 /* libPods-TextCast.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TextCast.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -73,7 +73,6 @@
 				3428F84CB684F378D337488A /* Pods-TextCast.debug.xcconfig */,
 				7DCC8C8A9A404E07C9AAF346 /* Pods-TextCast.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -375,7 +374,7 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = TextCast/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -406,7 +405,7 @@
 				CODE_SIGN_ENTITLEMENTS = TextCast/TextCast.entitlements;
 				CURRENT_PROJECT_VERSION = 2;
 				INFOPLIST_FILE = TextCast/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
