@@ -224,6 +224,9 @@ function MainHomeScreen() {
 
           {/* 右側: その他のボタン */}
           <View style={styles.headerRight}>
+            <TouchableOpacity onPress={() => router.push('/import')} style={styles.headerButton}>
+              <Ionicons name="add-circle-outline" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
             <TouchableOpacity onPress={handleThemeToggle} style={styles.headerButton}>
               <Ionicons
                 name={themeMode === 'light' ? 'sunny' : 'moon'}

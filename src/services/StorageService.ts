@@ -3,6 +3,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextItem, UserSettings, PLAN_LIMITS } from '../types';
 import { generateItemId, generateReferralCode } from '../utils/idGenerator';
+import { iCloudSyncService } from './iCloudSyncService';
 
 // AsyncStorageキー定義
 const STORAGE_KEYS = {
@@ -184,6 +185,7 @@ export class StorageService {
       await AsyncStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
 
       console.log('[StorageService] Item added:', newItem.id);
+      this.triggerBackgroundSync(); // iCloud同期
       return newItem;
     } catch (error) {
       console.error('[StorageService] addItem error:', error);
@@ -215,6 +217,7 @@ export class StorageService {
       await AsyncStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
 
       console.log('[StorageService] Item updated:', id);
+      this.triggerBackgroundSync(); // iCloud同期
       return updatedItem;
     } catch (error) {
       console.error('[StorageService] updateItem error:', error);
@@ -279,6 +282,7 @@ export class StorageService {
 
       await AsyncStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(filteredItems));
       console.log('[StorageService] Item permanently deleted:', id);
+      this.triggerBackgroundSync(); // iCloud同期
       return true;
     } catch (error) {
       console.error('[StorageService] permanentDelete error:', error);
@@ -366,6 +370,7 @@ export class StorageService {
 
       await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updatedSettings));
       console.log('[StorageService] Settings updated');
+      this.triggerBackgroundSync(); // iCloud同期
       return updatedSettings;
     } catch (error) {
       console.error('[StorageService] updateSettings error:', error);
@@ -407,6 +412,23 @@ export class StorageService {
     } catch (error) {
       console.error('[StorageService] getDataSize error:', error);
       return { items: 0, settings: 0 };
+    }
+  }
+
+  /**
+   * iCloud同期をトリガー（バックグラウンドで実行）
+   */
+  private static triggerBackgroundSync(): void {
+    const status = iCloudSyncService.getStatus();
+    if (status.enabled) {
+      // 非同期でバックグラウンド実行（100ms後）
+      setTimeout(async () => {
+        try {
+          await iCloudSyncService.syncToiCloud();
+        } catch (error) {
+          console.error('[StorageService] Background sync failed:', error);
+        }
+      }, 100);
     }
   }
 }

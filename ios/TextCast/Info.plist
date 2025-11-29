@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>textcast</string>
-          <string>com.yourname.textcast</string>
+          <string>com.textcastapp.ios</string>
         </array>
       </dict>
       <dict>

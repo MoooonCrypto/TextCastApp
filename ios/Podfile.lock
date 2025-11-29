@@ -2281,32 +2281,32 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
-  - "EXAV (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-av/ios`)"
-  - "EXConstants (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-constants/ios 2`)"
-  - "EXImageLoader (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-image-loader/ios`)"
-  - "EXJSONUtils (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-json-utils/ios`)"
-  - "EXManifests (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-manifests/ios 2`)"
-  - "Expo (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo`)"
-  - "expo-dev-client (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-client/ios`)"
-  - "expo-dev-launcher (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-launcher`)"
-  - "expo-dev-menu (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-menu`)"
-  - "expo-dev-menu-interface (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-menu-interface/ios 2`)"
-  - "ExpoAsset (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-asset/ios 2`)"
-  - "ExpoClipboard (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-clipboard/ios 2`)"
-  - "ExpoDocumentPicker (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-document-picker/ios 2`)"
-  - "ExpoFileSystem (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-file-system/ios 2`)"
-  - "ExpoFont (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-font/ios 2`)"
-  - "ExpoHead (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-router/ios 2`)"
-  - "ExpoImagePicker (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-image-picker/ios 2`)"
-  - "ExpoKeepAwake (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-keep-awake/ios 2`)"
-  - "ExpoLinearGradient (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linear-gradient/ios`)"
-  - "ExpoLinking (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linking/ios 2`)"
-  - "ExpoModulesCore (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-modules-core`)"
-  - "ExpoSpeech (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-speech/ios`)"
-  - "ExpoSplashScreen (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-splash-screen/ios`)"
-  - "ExpoSystemUI (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-system-ui/ios`)"
-  - "ExpoWebBrowser (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-web-browser/ios 2`)"
-  - "EXUpdatesInterface (from `../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-updates-interface/ios 2`)"
+  - "EXAV (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-av/ios`)"
+  - "EXConstants (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-constants/ios`)"
+  - "EXImageLoader (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-image-loader/ios`)"
+  - "EXJSONUtils (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-json-utils/ios`)"
+  - "EXManifests (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-manifests/ios`)"
+  - "Expo (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo`)"
+  - "expo-dev-client (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-client/ios`)"
+  - "expo-dev-launcher (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-launcher`)"
+  - "expo-dev-menu (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-menu`)"
+  - "expo-dev-menu-interface (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-menu-interface/ios`)"
+  - "ExpoAsset (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-asset/ios`)"
+  - "ExpoClipboard (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-clipboard/ios`)"
+  - "ExpoDocumentPicker (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-document-picker/ios`)"
+  - "ExpoFileSystem (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-file-system/ios`)"
+  - "ExpoFont (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-font/ios`)"
+  - "ExpoHead (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-router/ios`)"
+  - "ExpoImagePicker (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-image-picker/ios`)"
+  - "ExpoKeepAwake (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-keep-awake/ios`)"
+  - "ExpoLinearGradient (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linear-gradient/ios`)"
+  - "ExpoLinking (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linking/ios`)"
+  - "ExpoModulesCore (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-modules-core`)"
+  - "ExpoSpeech (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-speech/ios`)"
+  - "ExpoSplashScreen (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-splash-screen/ios`)"
+  - "ExpoSystemUI (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-system-ui/ios`)"
+  - "ExpoWebBrowser (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-web-browser/ios`)"
+  - "EXUpdatesInterface (from `../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-updates-interface/ios`)"
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -2395,57 +2395,57 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   EXAV:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-av/ios"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-av/ios"
   EXConstants:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-constants/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-constants/ios"
   EXImageLoader:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-image-loader/ios"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-image-loader/ios"
   EXJSONUtils:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-json-utils/ios"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-json-utils/ios"
   EXManifests:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-manifests/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-manifests/ios"
   Expo:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo"
   expo-dev-client:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-client/ios"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-client/ios"
   expo-dev-launcher:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-launcher"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-launcher"
   expo-dev-menu:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-menu"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-menu"
   expo-dev-menu-interface:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-menu-interface/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-dev-menu-interface/ios"
   ExpoAsset:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-asset/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-asset/ios"
   ExpoClipboard:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-clipboard/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-clipboard/ios"
   ExpoDocumentPicker:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-document-picker/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-document-picker/ios"
   ExpoFileSystem:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-file-system/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-file-system/ios"
   ExpoFont:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-font/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-font/ios"
   ExpoHead:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-router/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-router/ios"
   ExpoImagePicker:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-image-picker/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-keep-awake/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-keep-awake/ios"
   ExpoLinearGradient:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linear-gradient/ios"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linear-gradient/ios"
   ExpoLinking:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linking/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-linking/ios"
   ExpoModulesCore:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-modules-core"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-modules-core"
   ExpoSpeech:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-speech/ios"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-speech/ios"
   ExpoSplashScreen:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-splash-screen/ios"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-splash-screen/ios"
   ExpoSystemUI:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-system-ui/ios"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-system-ui/ios"
   ExpoWebBrowser:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-web-browser/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-web-browser/ios"
   EXUpdatesInterface:
-    :path: "../../../../開発アイデア/🔥自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-updates-interface/ios 2"
+    :path: "../../../../開発アイデア/自分用ポッドキャストアプリ/TextCastApp/node_modules/expo-updates-interface/ios"
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
   hermes-engine:
@@ -2697,7 +2697,7 @@ SPEC CHECKSUMS:
   React-timing: 62441edf291b91ab5b96ab8f2f8fb648c063ce6f
   React-utils: 485abe7eaefa04b20e0ef442593e022563a1419b
   ReactAppDependencyProvider: 433ddfb4536948630aadd5bd925aff8a632d2fe3
-  ReactCodegen: 8d64b8a9618be6436f61a3772f635b82cd661be3
+  ReactCodegen: 860ec0ae9d19aca6e28799f9380dfeafbc243f73
   ReactCommon: 149b6c05126f2e99f2ed0d3c63539369546f8cae
   ReactNativeDependencies: ed6d1e64802b150399f04f1d5728ec16b437251e
   RevenueCat: c63342889404269918c1196708246d7c21cf8e6d
@@ -2705,10 +2705,10 @@ SPEC CHECKSUMS:
   RNGestureHandler: 2914750df066d89bf9d8f48a10ad5f0051108ac3
   RNGoogleMobileAds: 4b30329879ddefafde950abde1ed03509fc130b4
   RNPurchases: bdec1e60caabb2e27937d9def7e80c9694e066db
-  RNReanimated: 8f039a7a5833bdc3d0d77d0a9f18e733f7653096
+  RNReanimated: 24ea272c9703c45b9218501d2ae895ff2fd0a2ef
   RNScreens: d8d6f1792f6e7ac12b0190d33d8d390efc0c1845
   RNSVG: 31d6639663c249b7d5abc9728dde2041eb2a3c34
-  RNWorklets: e364508cac14fe96550190c5794bfcc21287cd04
+  RNWorklets: 5549099fd7417f91dac577604d07ef78563a7b32
   Yoga: 051f086b5ccf465ff2ed38a2cf5a558ae01aaaa1
 
 PODFILE CHECKSUM: 6eb8581b99d75d3ace37a86d2ab2abb3ae09b07b

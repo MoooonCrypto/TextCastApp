@@ -13,7 +13,9 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { ThemeProvider } from '../src/contexts/ThemeContext';
 import { useVoiceStore } from '../src/stores/useVoiceStore';
 import { usePurchaseStore } from '../src/stores/usePurchaseStore';
+import { iCloudSyncService } from '../src/services/iCloudSyncService';
 import { Audio } from 'expo-av';
+import { processSharedArticles } from '../src/utils/processSharedArticles';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -57,7 +59,7 @@ function RootLayoutNav() {
   const { loadVoiceFromStorage } = useVoiceStore();
   const { initialize: initializePurchase } = usePurchaseStore();
 
-  // アプリ起動時に音声設定を読み込み & オーディオモード設定 & 課金初期化
+  // アプリ起動時に音声設定を読み込み & オーディオモード設定 & 課金初期化 & 共有記事チェック & iCloud同期
   useEffect(() => {
     loadVoiceFromStorage();
     initializePurchase(); // 課金システム初期化
@@ -78,7 +80,40 @@ function RootLayoutNav() {
       }
     };
 
+    // 共有された記事をチェックして処理
+    const checkSharedArticles = async () => {
+      try {
+        const count = await processSharedArticles();
+        if (count > 0) {
+          console.log(`✅ ${count}件の共有記事を処理しました`);
+        }
+      } catch (error) {
+        console.error('❌ 共有記事処理エラー:', error);
+      }
+    };
+
+    // iCloud同期を初期化（プレミアム会員のみ）
+    const setupiCloudSync = async () => {
+      try {
+        // 課金初期化が完了するまで少し待つ
+        setTimeout(async () => {
+          const { isPremium } = usePurchaseStore.getState();
+          await iCloudSyncService.initialize(isPremium);
+
+          // プレミアム会員なら自動同期を開始（10分ごと）
+          if (isPremium) {
+            iCloudSyncService.startAutoSync(10);
+            console.log('✅ iCloud自動同期を開始しました');
+          }
+        }, 1000);
+      } catch (error) {
+        console.error('❌ iCloud同期初期化エラー:', error);
+      }
+    };
+
     setupAudioMode();
+    checkSharedArticles();
+    setupiCloudSync();
   }, []);
 
   return (

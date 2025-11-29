@@ -7,10 +7,10 @@ export interface TextItem {
   content: string;         // 本文（最大100,000文字）
 
   // 入力ソース
-  source: 'manual' | 'file' | 'url' | 'camera'; // 入力方法
+  source: 'manual' | 'file' | 'url' | 'camera' | 'image'; // 入力方法
   sourceUrl?: string;      // 元URL（URLから取得の場合）
   fileName?: string;       // ファイル名（ファイルから取得の場合）
-  fileType?: string;       // ファイル種別（pdf, docx, etc.）
+  fileType?: 'pdf' | 'epub' | 'docx' | 'pptx' | 'txt' | 'md' | 'csv' | 'image' | 'jpg' | 'png'; // ファイル種別
 
   // 分類
   category: string;        // 自動分類カテゴリ
